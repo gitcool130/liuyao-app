@@ -1,14 +1,18 @@
 # 六爻排盘 (Liuyao Divination App)
 
-基于 Flutter 的跨平台六爻排盘应用，遵循传统京房纳甲法。
+六爻排盘软件，支持输入摇卦数字或在线起卦排盘，数据存储在用户手机本地，可离线运行。解卦记录保存后可单独或批量导出，支持通过OCR识别排盘截图，主要针对易青岚的排盘和作业卦截图。
+
+基于 Flutter 的跨平台应用，遵循传统京房纳甲法。
 
 ## 功能
 
 - 铜钱手动输入 / 在线模拟摇卦 / 时间起卦
+- **拍照导入排盘**（本地OCR识别，无需API Key）
 - 干支转换（公历 → 六十甲子）
 - 纳甲装卦（京房八宫纳甲）
 - 六亲 / 六神 / 世应 / 旬空 / 伏神 / 神煞
 - 本卦 / 变卦 / 互卦
+- 辅助解卦功能（数字量化、冲合生克连线）
 - 历史记录存储（SQLite）
 - 解卦笔记
 
@@ -16,6 +20,7 @@
 
 - Flutter 3.x / Dart 3.x
 - sqflite + Provider
+- Google ML Kit（本地OCR）
 
 ## 项目结构
 
@@ -27,6 +32,7 @@ lib/
 ├── providers/     # 状态管理
 ├── screens/       # 页面
 ├── widgets/       # 可复用组件
+├── services/      # 服务层（OCR识别等）
 └── utils/         # 工具函数
 ```
 
@@ -57,5 +63,7 @@ flutter test test/algorithms/
 ## 开发文档
 
 - [DESIGN.md](DESIGN.md) — 六爻排盘理论知识
-- [DEVELOPMENT_SPEC.md](DEVELOPMENT_SPEC.md) — 完整开发规格（给 AI Coding Agent 用）
+- [DEVELOPMENT_SPEC.md](DEVELOPMENT_SPEC.md) — 完整开发规格
+- [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) — 开发指南
+- [IMAGE_IMPORT_SPEC.md](IMAGE_IMPORT_SPEC.md) — 图像导入功能规格
 - [BUG_REPORT.md](BUG_REPORT.md) — 已知 Bug 与修复记录
