@@ -69,7 +69,7 @@ class ShouXingCalendar {
   static bool _initialized = false;
 
   /// 初始化节气表
-  /// 优先加载用户下载的新表，回退到内置assets
+  /// 优先加载高精度数据（2026-2030），再加载基础数据（1900-2100）
   static Future<void> init() async {
     if (_initialized) return;
 
@@ -80,22 +80,76 @@ class ShouXingCalendar {
       if (userTableFile.existsSync()) {
         final content = await userTableFile.readAsString();
         await _parseTable(content);
-        _initialized = true;
-        return;
       }
     } catch (e) {
-      // 文件不存在或读取失败，继续尝试内置表
+      // 文件不存在或读取失败，继续
     }
 
-    // 2. 回退到内置 assets/jieqi_table.json
+    // 2. 加载高精度节气数据（2026-2030）
     try {
-      final content = await rootBundle.loadString('assets/jieqi_table.json');
-      await _parseTable(content);
+      final content = await rootBundle.loadString('assets/jieqi_2026_2030.json');
+      await _parseHighPrecisionTable(content);
     } catch (e) {
-      // 内置表加载失败，将依赖 Meeus 兜底计算
+      // 高精度数据加载失败
+    }
+
+    // 3. 加载基础节气数据（1900-2100）作为兜底
+    if (_table.isEmpty) {
+      try {
+        final content = await rootBundle.loadString('assets/jieqi_table.json');
+        await _parseTable(content);
+      } catch (e) {
+        // 内置表加载失败，将依赖 Meeus 兜底计算
+      }
     }
 
     _initialized = true;
+  }
+
+  /// 解析高精度节气表（新格式）
+  static Future<void> _parseHighPrecisionTable(String content) async {
+    final json = jsonDecode(content) as Map<String, dynamic>;
+
+    for (final entry in json.entries) {
+      // 跳过备注字段
+      if (entry.key == '备注' || entry.key == '时区') continue;
+
+      final year = int.parse(entry.key);
+      final list = (entry.value as List).map((e) {
+        final item = e as Map<String, dynamic>;
+        // 解析时间字符串 "HH:MM"
+        final timeStr = item['time'] as String;
+        final timeParts = timeStr.split(':');
+        final hour = int.parse(timeParts[0]);
+        final minute = int.parse(timeParts[1]);
+
+        // 获取月支索引
+        final jieQiName = item['name'] as String;
+        final jieQiIdx = jieQiNames.indexOf(jieQiName);
+        final monthZhiIdx = jieQiIdx >= 0 ? jieQiToMonthZhi[jieQiIdx] : 1;
+
+        return JieQiData(
+          name: jieQiName,
+          monthZhiIdx: monthZhiIdx,
+          time: DateTime.utc(
+            year,
+            item['month'] as int,
+            item['day'] as int,
+            hour,
+            minute,
+          ),
+        );
+      }).toList();
+
+      // 覆盖或添加到表中
+      _table[year] = list;
+    }
+
+    if (_table.isNotEmpty) {
+      final years = _table.keys.toList();
+      _minYear = years.reduce(min);
+      _maxYear = years.reduce(max);
+    }
   }
 
   /// 解析JSON节气表

@@ -80,8 +80,9 @@ flutter:
     # 铜钱背面（2枚，随机选）
     - assets/images/back01.png
     - assets/images/back02.png
-    # 节气查表数据（1900-2100）
-    - assets/jieqi_table.json
+    # 节气查表数据
+    - assets/jieqi_table.json      # 1900-2100年基础数据
+    - assets/jieqi_2026_2030.json   # 2026-2030年高精度数据
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
