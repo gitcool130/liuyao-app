@@ -769,43 +769,40 @@ class _ResultScreenState extends State<ResultScreen> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.edit_note, size: 18),
-                const SizedBox(width: 6),
-                const Text(
-                  '解卦笔记',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                const Icon(Icons.edit_note, size: 16),
+                const SizedBox(width: 4),
+                const Text('解卦笔记',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 if (_isEditing)
                   ElevatedButton(
                     onPressed: () => _finishEditing(record),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       minimumSize: Size.zero,
+                      visualDensity: VisualDensity.compact,
                     ),
-                    child: const Text('完成', style: TextStyle(fontSize: 12)),
+                    child: const Text('完成', style: TextStyle(fontSize: 11)),
                   )
                 else
                   TextButton(
                     onPressed: () => setState(() => _isEditing = true),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       minimumSize: Size.zero,
+                      visualDensity: VisualDensity.compact,
                     ),
-                    child: const Text('编辑', style: TextStyle(fontSize: 12)),
+                    child: const Text('编辑', style: TextStyle(fontSize: 11)),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
             if (_isEditing)
               TextField(
@@ -814,7 +811,8 @@ class _ResultScreenState extends State<ResultScreen> {
                 decoration: const InputDecoration(
                   hintText: '请输入解卦内容...',
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.all(10),
+                  contentPadding: EdgeInsets.fromLTRB(8, 6, 8, 6),
+                  isDense: true,
                 ),
                 style: const TextStyle(fontSize: 13),
               )
