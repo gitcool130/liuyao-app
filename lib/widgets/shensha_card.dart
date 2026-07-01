@@ -100,17 +100,6 @@ class _ShenshaCardState extends State<ShenshaCard> {
                   overflow: TextOverflow.ellipsis,
                 )).toList(),
               ),
-              if (hasMultiRows)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      _expanded ? '▲ 收起' : '▼ 展开全部',
-                      style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
