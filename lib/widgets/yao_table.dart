@@ -386,12 +386,10 @@ class _YaoSymbolCell extends StatelessWidget {
     // 动爻标记符号◎✕用更大字号渲染
     final double symbolFontSize = isDong ? fontSize * 1.4 : fontSize;
 
-    return SizedBox(
+    return Container(
       width: width,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerLeft,
-        child: RichText(
+      alignment: Alignment.centerLeft,
+      child: RichText(
           text: TextSpan(
             children: [
               if (isDong && symbol.contains('○'))
