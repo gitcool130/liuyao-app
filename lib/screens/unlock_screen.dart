@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/feature_lock_service.dart';
 import '../providers/settings_provider.dart';
@@ -90,40 +91,49 @@ class _UnlockScreenState extends State<UnlockScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('功能解锁'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.copy),
-            tooltip: '复制设备ID',
-            onPressed: () {
-              if (_deviceId != null) {
-                // 复制到剪贴板
-                final data = _deviceId!;
-                setState(() => _message = '设备ID已复制');
-                Future.delayed(const Duration(seconds: 2), () {
-                  if (mounted) setState(() => _message = null);
-                });
-              }
-            },
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 设备ID
+          // 设备ID（带复制按钮）
           Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('设备ID', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  Row(
+                    children: [
+                      const Text('设备ID', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                      const Spacer(),
+                      SizedBox(
+                        height: 28,
+                        child: TextButton.icon(
+                          onPressed: () {
+                            if (_deviceId != null) {
+                              Clipboard.setData(ClipboardData(text: _deviceId!));
+                              setState(() => _message = '设备ID已复制');
+                              Future.delayed(const Duration(seconds: 2), () {
+                                if (mounted) setState(() => _message = null);
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.copy, size: 14),
+                          label: const Text('复制', style: TextStyle(fontSize: 12)),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            foregroundColor: const Color(0xFF8B4513),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   SelectableText(
                     _deviceId ?? '加载中...',
-                    style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                    style: const TextStyle(fontSize: 13, fontFamily: 'monospace', fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     '将设备ID提供给管理员以申请验证码',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
