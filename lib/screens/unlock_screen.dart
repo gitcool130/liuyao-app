@@ -275,34 +275,6 @@ class _UnlockScreenState extends State<UnlockScreen> {
             ),
           ),
 
-          const SizedBox(height: 16),
-
-          // 管理员工具（生成验证码的测试工具）
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('管理员工具', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF5D4037))),
-                  const SizedBox(height: 8),
-                  const Text('可在命令行生成验证码：', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const SelectableText(
-                      'dart run lib/services/gen_code.dart <设备ID>',
-                      style: TextStyle(fontSize: 11, fontFamily: 'monospace'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
