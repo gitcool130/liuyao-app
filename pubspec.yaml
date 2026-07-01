@@ -38,6 +38,7 @@ dependencies:
   path: ^1.8.0
   share_plus: ^13.1.0
   sensors_plus: ^7.1.0
+  crypto: ^3.0.6
   
   # 图像识别功能依赖
   image_picker: ^1.1.2

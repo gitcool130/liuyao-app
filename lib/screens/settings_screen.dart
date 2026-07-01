@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_settings.dart';
 import '../providers/settings_provider.dart';
+import 'unlock_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -149,6 +150,22 @@ class _SettingsScreenState extends State<SettingsScreen>
             label: const Text('恢复默认'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
           ),
+        ),
+
+        const Divider(height: 16),
+
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.lock_outline, color: Color(0xFF5D4037)),
+          title: const Text('功能解锁', style: TextStyle(fontSize: 15)),
+          subtitle: const Text('输入验证码解锁高级功能', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UnlockScreen()),
+            );
+          },
         ),
       ],
     );
