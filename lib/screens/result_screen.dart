@@ -857,6 +857,8 @@ class _ResultScreenState extends State<ResultScreen> {
     final lunarDateStr = LunarCalendar.getLunarDateString(record.divTime);
     // 时辰显示：干支时柱
     final hourGz = record.hourGz;
+    final settings = context.read<SettingsProvider>().settings;
+    final infoFontSize = settings.infoFontSize;
 
     // 检查是否是节气日
     String jieQiStr = '';
@@ -884,22 +886,27 @@ class _ResultScreenState extends State<ResultScreen> {
             // 第一行：起卦时间 + 农历（干支年 + 月日）
             Row(
               children: [
-                Text(
-                  record.formattedDivTime,
-                  style: const TextStyle(fontSize: 11),
-                ),
-                Expanded(
+                Flexible(
                   child: Text(
-                    '  ${record.yearGz}年 $lunarDateStr $hourGz时',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                    record.formattedDivTime,
+                    style: TextStyle(fontSize: infoFontSize),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    '${record.yearGz}年 $lunarDateStr $hourGz时',
+                    style: TextStyle(fontSize: infoFontSize, color: Colors.grey.shade700),
                     textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 3),
 
-            // 第二行：干支四柱
+            // 第二行：干支四柱（保持不变，已经特殊处理放大）
             Text(
               '${record.yearGz}年 ${record.monthGz}月 ${record.dayGz}日 ${record.hourGz}时',
               style: const TextStyle(
@@ -915,16 +922,31 @@ class _ResultScreenState extends State<ResultScreen> {
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   '节气：$jieQiStr',
-                  style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
+                  style: TextStyle(fontSize: infoFontSize, color: Colors.orange.shade700),
                 ),
               ),
 
             const SizedBox(height: 3),
 
-            // 旬空 + 卦宫
-            Text(
-              '旬空：${record.xunKong}  卦宫：${record.benGua.gongName}(${record.benGua.guaWuXing})',
-              style: const TextStyle(fontSize: 11),
+            // 旬空（默认加粗）+ 卦宫
+            RichText(
+              text: TextSpan(
+                children: [
+                  const TextSpan(
+                    text: '旬空：',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  TextSpan(
+                    text: record.xunKong,
+                    style: TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFF8B4513)),
+                  ),
+                  TextSpan(
+                    text: '  卦宫：${record.benGua.gongName}(${record.benGua.guaWuXing})',
+                    style: const TextStyle(color: Colors.black87),
+                  ),
+                ],
+                style: TextStyle(fontSize: infoFontSize),
+              ),
             ),
 
             // 问题（如有）
@@ -933,8 +955,8 @@ class _ResultScreenState extends State<ResultScreen> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '问：${record.question}',
-                  style: const TextStyle(
-                    fontSize: 11,
+                  style: TextStyle(
+                    fontSize: infoFontSize,
                     fontStyle: FontStyle.italic,
                   ),
                 ),

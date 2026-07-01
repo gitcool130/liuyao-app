@@ -1,12 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/shensha_result.dart';
+import '../models/app_settings.dart';
+import '../providers/settings_provider.dart';
 
 /// 神煞信息卡片组件
-/// 两排显示10项神煞（一行5个）
+/// 自适应wrap布局，根据字体大小自动决定每行显示数量
+/// 支持用户勾选显示特定神煞
 class ShenshaCard extends StatelessWidget {
   final ShenshaResult shensha;
 
   const ShenshaCard({super.key, required this.shensha});
+
+  /// 神煞名称列表（供过滤使用）
+  static const _shenshaDisplayNames = [
+    '天乙贵人', '驿马', '咸池', '禄神', '华盖', '天医',
+    '文昌', '将星', '羊刃', '红鸾', '天喜', '劫煞',
+  ];
+
+  /// 神煞字段取值映射
+  static String _getShenshaValue(ShenshaResult s, String displayName) {
+    switch (displayName) {
+      case '天乙贵人': return s.tianYi;
+      case '驿马': return s.yiMa;
+      case '咸池': return s.xianChi;
+      case '禄神': return s.luShen;
+      case '华盖': return s.huaGai;
+      case '天医': return s.tianYiShen;
+      case '文昌': return s.wenChang;
+      case '将星': return s.jiangXing;
+      case '羊刃': return s.yangRen;
+      case '红鸾': return s.hongLuan;
+      case '天喜': return s.tianXi;
+      case '劫煞': return s.jieSha;
+      default: return '';
+    }
+  }
+
+  /// field名 → 显示名
+  static const _fieldToName = {
+    'tianYi': '天乙贵人',
+    'yiMa': '驿马',
+    'xianChi': '咸池',
+    'luShen': '禄神',
+    'huaGai': '华盖',
+    'tianYiShen': '天医',
+    'wenChang': '文昌',
+    'jiangXing': '将星',
+    'yangRen': '羊刃',
+    'hongLuan': '红鸾',
+    'tianXi': '天喜',
+    'jieSha': '劫煞',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -14,54 +59,49 @@ class ShenshaCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final settings = context.watch<SettingsProvider>().settings;
+    final fontSize = settings.shenshaFontSize;
+    final visibleFields = settings.visibleShensha.toSet();
+
+    // 过滤出用户选择且非空的神煞
+    final items = <_ShenshaItem>[];
+    for (final displayName in _shenshaDisplayNames) {
+      final fieldName = _fieldToName.entries
+          .firstWhere((e) => e.value == displayName,
+              orElse: () => MapEntry('', ''))
+          .key;
+      if (fieldName.isEmpty) continue;
+      if (!visibleFields.contains(fieldName)) continue;
+      final value = _getShenshaValue(shensha, displayName);
+      if (value.isEmpty) continue;
+      items.add(_ShenshaItem(displayName, value, fieldName));
+    }
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildRow([
-              _item('天乙', shensha.tianYi),
-              _item('驿马', shensha.yiMa),
-              _item('咸池', shensha.xianChi),
-              _item('禄神', shensha.luShen),
-              _item('华盖', shensha.huaGai),
-            ]),
-            const SizedBox(height: 4),
-            _buildRow([
-              _item('天医', shensha.tianYiShen),
-              _item('文昌', shensha.wenChang),
-              _item('将星', shensha.jiangXing),
-              _item('羊刃', shensha.yangRen),
-              _item('天喜', shensha.tianXi),
-            ]),
-          ],
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 4,
+          children: items.map((item) {
+            return Text(
+              '${item.name}：${item.value}',
+              style: TextStyle(fontSize: fontSize),
+              overflow: TextOverflow.ellipsis,
+            );
+          }).toList(),
         ),
       ),
     );
   }
-
-  Widget _buildRow(List<_ShenshaItem> items) {
-    return Row(
-      children: items.map((item) {
-        if (item.value.isEmpty) return const SizedBox.shrink();
-        return Expanded(
-          child: Text(
-            '${item.name}：${item.value}',
-            style: const TextStyle(fontSize: 12),
-            overflow: TextOverflow.ellipsis,
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  _ShenshaItem _item(String name, String value) => _ShenshaItem(name, value);
 }
 
 class _ShenshaItem {
   final String name;
   final String value;
-  const _ShenshaItem(this.name, this.value);
+  final String fieldName;
+  const _ShenshaItem(this.name, this.value, this.fieldName);
 }

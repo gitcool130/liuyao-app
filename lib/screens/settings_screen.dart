@@ -1,5 +1,5 @@
 /// 设置界面
-/// 自定义爻颜色、连线颜色、爻象字体大小
+/// 颜色设置、字体设置、神煞设置三个分页
 library;
 
 import 'package:flutter/material.dart';
@@ -14,9 +14,23 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   late AppSettings _temp;
   bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -27,7 +41,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  /// 选择颜色的底部弹窗
   Future<void> _pickColor(String title, Color current, ValueChanged<Color> onPicked) async {
     final selected = await showModalBottomSheet<Color>(
       context: context,
@@ -42,13 +55,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('颜色设置'),
+        title: const Text('设置'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () {
-            // 不保存，直接返回
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
@@ -63,100 +73,242 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          tabs: const [
+            Tab(text: '颜色', icon: Icon(Icons.color_lens, size: 18)),
+            Tab(text: '字体', icon: Icon(Icons.text_fields, size: 18)),
+            Tab(text: '神煞', icon: Icon(Icons.star, size: 18)),
+          ],
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          // === 爻颜色 ===
-          _sectionHeader('爻颜色'),
-          const SizedBox(height: 8),
-          _colorItem(
-            '静爻颜色',
-            _temp.staticYaoColor,
-            (c) => _temp.staticYaoColor = c,
-          ),
-          _colorItem(
-            '动爻颜色',
-            _temp.dongYaoColor,
-            (c) => _temp.dongYaoColor = c,
-          ),
-          _fontSizeItem(
-            '爻象字体大小',
-            _temp.yaoFontSize,
-            (v) => _temp.yaoFontSize = v,
-          ),
-
-          const Divider(height: 32),
-
-          // === 连线颜色 ===
-          _sectionHeader('连线颜色'),
-          const SizedBox(height: 8),
-          _colorItem(
-            '冲线颜色',
-            _temp.chongLineColor,
-            (c) => _temp.chongLineColor = c,
-          ),
-          _colorItem(
-            '合线颜色',
-            _temp.heLineColor,
-            (c) => _temp.heLineColor = c,
-          ),
-          _colorItem(
-            '生线颜色',
-            _temp.shengLineColor,
-            (c) => _temp.shengLineColor = c,
-          ),
-          _colorItem(
-            '克线颜色',
-            _temp.keLineColor,
-            (c) => _temp.keLineColor = c,
-          ),
-
-          const Divider(height: 32),
-
-          // === 显示选项 ===
-          _sectionHeader('显示选项'),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('地支五行彩色显示', style: TextStyle(fontSize: 15)),
-            subtitle: const Text('水蓝 火红 木绿 金黄 土棕'),
-            value: _temp.showColoredWuXing,
-            onChanged: (v) => setState(() => _temp.showColoredWuXing = v),
-          ),
-
-          const Divider(height: 32),
-
-          // === 示例预览 ===
-          _sectionHeader('预览'),
-          const SizedBox(height: 8),
-          _buildPreviewRow('───', '静爻', _temp.staticYaoColor),
-          _buildPreviewRow('───○', '动爻', _temp.dongYaoColor),
-          const SizedBox(height: 8),
-          _buildLinePreview('冲线', _temp.chongLineColor),
-          _buildLinePreview('合线', _temp.heLineColor),
-          _buildLinePreview('生线', _temp.shengLineColor),
-          _buildLinePreview('克线', _temp.keLineColor),
-
-          const SizedBox(height: 32),
-
-          // === 重置按钮 ===
-          Center(
-            child: TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _temp = AppSettings();
-                });
-              },
-              icon: const Icon(Icons.restore),
-              label: const Text('恢复默认'),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-            ),
-          ),
+          _buildColorTab(),
+          _buildFontTab(),
+          _buildShenshaTab(),
         ],
       ),
     );
   }
+
+  // ==================== 颜色设置 ====================
+
+  Widget _buildColorTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _sectionHeader('爻颜色'),
+        const SizedBox(height: 8),
+        _colorItem('静爻颜色', _temp.staticYaoColor, (c) => _temp.staticYaoColor = c),
+        _colorItem('动爻颜色', _temp.dongYaoColor, (c) => _temp.dongYaoColor = c),
+        _fontSizeItem('爻象字体大小', _temp.yaoFontSize, (v) => _temp.yaoFontSize = v, 10, 18),
+
+        const Divider(height: 32),
+
+        _sectionHeader('连线颜色'),
+        const SizedBox(height: 8),
+        _colorItem('冲线颜色', _temp.chongLineColor, (c) => _temp.chongLineColor = c),
+        _colorItem('合线颜色', _temp.heLineColor, (c) => _temp.heLineColor = c),
+        _colorItem('生线颜色', _temp.shengLineColor, (c) => _temp.shengLineColor = c),
+        _colorItem('克线颜色', _temp.keLineColor, (c) => _temp.keLineColor = c),
+
+        const Divider(height: 32),
+
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('地支五行彩色显示', style: TextStyle(fontSize: 15)),
+          subtitle: const Text('水蓝 火红 木绿 金黄 土棕'),
+          value: _temp.showColoredWuXing,
+          onChanged: (v) => setState(() => _temp.showColoredWuXing = v),
+        ),
+
+        const Divider(height: 32),
+
+        _sectionHeader('预览'),
+        const SizedBox(height: 8),
+        _buildPreviewRow('───', '静爻', _temp.staticYaoColor),
+        _buildPreviewRow('───○', '动爻', _temp.dongYaoColor),
+        const SizedBox(height: 8),
+        _buildLinePreview('冲线', _temp.chongLineColor),
+        _buildLinePreview('合线', _temp.heLineColor),
+        _buildLinePreview('生线', _temp.shengLineColor),
+        _buildLinePreview('克线', _temp.keLineColor),
+
+        const SizedBox(height: 32),
+
+        Center(
+          child: TextButton.icon(
+            onPressed: () {
+              setState(() => _temp = AppSettings());
+            },
+            icon: const Icon(Icons.restore),
+            label: const Text('恢复默认'),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==================== 字体设置 ====================
+
+  Widget _buildFontTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _sectionHeader('神煞字体大小'),
+        const SizedBox(height: 4),
+        const Text('控制神煞栏显示字体大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 8),
+        _fontSizeItem('神煞字体', _temp.shenshaFontSize, (v) => _temp.shenshaFontSize = v, 10, 20),
+
+        const Divider(height: 32),
+
+        _sectionHeader('信息栏字体大小'),
+        const SizedBox(height: 4),
+        const Text('控制起卦时间、农历、旬空、问念等文字大小（干支四柱不变）', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 8),
+        _fontSizeItem('信息字体', _temp.infoFontSize, (v) => _temp.infoFontSize = v, 10, 18),
+
+        const Divider(height: 32),
+
+        _sectionHeader('示例预览'),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '2026年6月25日 21:45',
+                style: TextStyle(fontSize: _temp.infoFontSize),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '丙午年 甲午月 庚午日 丁亥时',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8B4513),
+                ),
+              ),
+              const SizedBox(height: 4),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    const TextSpan(
+                      text: '旬空：',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                    TextSpan(
+                      text: '戌亥',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFF8B4513)),
+                    ),
+                    const TextSpan(
+                      text: '  卦宫：乾宫(金)',
+                      style: TextStyle(color: Colors.black87),
+                    ),
+                  ],
+                  style: TextStyle(fontSize: _temp.infoFontSize),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '神煞：天乙:丑未  驿马:申  咸池:卯',
+                style: TextStyle(fontSize: _temp.shenshaFontSize, color: Colors.black87),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==================== 神煞设置 ====================
+
+  Widget _buildShenshaTab() {
+    // 所有神煞项，按显示顺序排列
+    const items = [
+      ('tianYi', '天乙贵人'),
+      ('yiMa', '驿马'),
+      ('huaGai', '华盖'),
+      ('xianChi', '咸池'),
+      ('luShen', '禄神'),
+      ('tianYiShen', '天医'),
+      ('wenChang', '文昌'),
+      ('jiangXing', '将星'),
+      ('yangRen', '羊刃'),
+      ('hongLuan', '红鸾'),
+      ('tianXi', '天喜'),
+      ('jieSha', '劫煞'),
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _sectionHeader('神煞显示设置'),
+        const SizedBox(height: 4),
+        const Text('选择在排盘结果中显示的神煞项', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 12),
+
+        // 全选/取消全选
+        Row(
+          children: [
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _temp.visibleShensha = items.map((e) => e.$1).toList();
+                });
+              },
+              icon: const Icon(Icons.select_all, size: 18),
+              label: const Text('全选', style: TextStyle(fontSize: 13)),
+            ),
+            const SizedBox(width: 8),
+            TextButton.icon(
+              onPressed: () {
+                setState(() => _temp.visibleShensha = []);
+              },
+              icon: const Icon(Icons.deselect, size: 18),
+              label: const Text('取消全选', style: TextStyle(fontSize: 13)),
+            ),
+          ],
+        ),
+
+        const Divider(),
+
+        // 神煞列表
+        ...items.map((item) {
+          final isChecked = _temp.visibleShensha.contains(item.$1);
+          return CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(item.$2, style: const TextStyle(fontSize: 15)),
+            value: isChecked,
+            activeColor: const Color(0xFF8B4513),
+            onChanged: (v) {
+              setState(() {
+                if (v == true) {
+                  _temp.visibleShensha.add(item.$1);
+                } else {
+                  _temp.visibleShensha.remove(item.$1);
+                }
+              });
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  // ==================== 公用组件 ====================
 
   Widget _sectionHeader(String text) {
     return Text(
@@ -188,21 +340,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _fontSizeItem(String label, double current, ValueChanged<double> onChanged) {
+  Widget _fontSizeItem(String label, double current, ValueChanged<double> onChanged, double min, double max) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(label, style: const TextStyle(fontSize: 15)),
       trailing: SizedBox(
-        width: 160,
+        width: 180,
         child: Row(
           children: [
             Text('${current.toInt()}', style: const TextStyle(fontSize: 15)),
             Expanded(
               child: Slider(
                 value: current,
-                min: 10,
-                max: 18,
-                divisions: 8,
+                min: min,
+                max: max,
+                divisions: (max - min).toInt(),
                 label: current.toInt().toString(),
                 onChanged: (v) => setState(() => onChanged(v)),
               ),

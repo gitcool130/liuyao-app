@@ -142,6 +142,12 @@ class DivinationRecord {
         '${divTime.hour}:${divTime.minute.toString().padLeft(2, '0')}';
   }
 
+  /// 格式化创建时间（记录添加时间，精确到分钟）
+  String get formattedCreatedAt {
+    return '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')} '
+        '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
+  }
+
   /// 格式化干支显示
   String get formattedGanZhi {
     return '$yearGz年 $monthGz月 $dayGz日 $hourGz时';

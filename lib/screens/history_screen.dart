@@ -157,13 +157,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 时间
-                    Text(
-                      record.formattedDivTime,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    // 时间（起卦时间 + 添加时间）
+                    Row(
+                      children: [
+                        Text(
+                          record.formattedDivTime,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '记录于 ${record.formattedCreatedAt}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
 

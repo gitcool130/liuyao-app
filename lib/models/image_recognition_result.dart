@@ -150,12 +150,22 @@ class ParsedDivinationData {
       return null;
     }
 
+    // OCR识别的排盘没有起卦人信息，用识别的日期和时间填入
+    final String ocrQuerentName;
+    if (gregorianTime != null) {
+      final gt = gregorianTime!;
+      ocrQuerentName = 'OCR导入 ${gt.month}月${gt.day}日 '
+          '${gt.hour.toString().padLeft(2, '0')}:${gt.minute.toString().padLeft(2, '0')}';
+    } else {
+      ocrQuerentName = 'OCR导入';
+    }
+
     return DivinationRecord(
       createdAt: DateTime.now(),
       divTime: gregorianTime ?? DateTime.now(),
       question: question ?? '',
       startMethod: 'image_import', // 图像导入
-      querentName: '',
+      querentName: ocrQuerentName,
       querentGender: gender ?? '',
       lunarYear: lunarTime,
       yearGz: yearGanZhi ?? '',

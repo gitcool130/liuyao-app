@@ -1,5 +1,5 @@
 /// 应用设置模型
-/// 管理颜色自定义、字体大小等用户偏好
+/// 管理颜色自定义、字体大小、神煞显示等用户偏好
 library;
 
 import 'dart:convert';
@@ -26,6 +26,28 @@ const List<ColorOption> presetColors = [
   ColorOption('黑色', Color(0xFF000000)),
 ];
 
+/// 全部神煞项定义（名称 → 显示标签）
+const Map<String, String> allShenshaItems = {
+  '天乙贵人': 'tianYi',
+  '驿马': 'yiMa',
+  '咸池': 'xianChi',
+  '禄神': 'luShen',
+  '华盖': 'huaGai',
+  '天医': 'tianYiShen',
+  '文昌': 'wenChang',
+  '将星': 'jiangXing',
+  '羊刃': 'yangRen',
+  '红鸾': 'hongLuan',
+  '天喜': 'tianXi',
+  '劫煞': 'jieSha',
+};
+
+/// 按shouxing_calendar.dart定义顺序排列的神煞显示名称
+const List<String> shenshaDisplayNames = [
+  '天乙贵人', '驿马', '华盖', '咸池', '禄神', '天医',
+  '文昌', '将星', '羊刃', '红鸾', '天喜', '劫煞',
+];
+
 class AppSettings {
   // ========== 爻颜色 ==========
   Color staticYaoColor;      // 静爻颜色
@@ -41,6 +63,13 @@ class AppSettings {
   // ========== 显示开关 ==========
   bool showColoredWuXing;    // 地支五行彩色显示
 
+  // ========== 字体大小 ==========
+  double shenshaFontSize;    // 神煞栏字体大小
+  double infoFontSize;       // 顶端pad信息字体大小（起卦时间、旬空等）
+
+  // ========== 神煞显示 ==========
+  List<String> visibleShensha; // 用户选择显示的神煞（field名列表）
+
   AppSettings({
     Color? staticYaoColor,
     Color? dongYaoColor,
@@ -50,13 +79,24 @@ class AppSettings {
     Color? shengLineColor,
     Color? keLineColor,
     this.showColoredWuXing = false,
+    double? shenshaFontSize,
+    double? infoFontSize,
+    List<String>? visibleShensha,
   })  : staticYaoColor = staticYaoColor ?? const Color(0xFF8B4513),
         dongYaoColor = dongYaoColor ?? Colors.orange.shade700,
         yaoFontSize = yaoFontSize ?? 13,
         chongLineColor = chongLineColor ?? const Color(0xFFE53935),
         heLineColor = heLineColor ?? const Color(0xFF43A047),
         shengLineColor = shengLineColor ?? const Color(0xFFFFB300),
-        keLineColor = keLineColor ?? const Color(0xFF1E88E5);
+        keLineColor = keLineColor ?? const Color(0xFF1E88E5),
+        shenshaFontSize = shenshaFontSize ?? 12,
+        infoFontSize = infoFontSize ?? 12,
+        visibleShensha = visibleShensha ?? _defaultVisibleShensha();
+
+  /// 默认显示全部神煞
+  static List<String> _defaultVisibleShensha() {
+    return allShenshaItems.values.toList();
+  }
 
   /// 获取连线颜色（按关系类型）
   Color getLineColor(int relationType) {
@@ -92,6 +132,9 @@ class AppSettings {
     'shengLineColor': shengLineColor.value,
     'keLineColor': keLineColor.value,
     'showColoredWuXing': showColoredWuXing,
+    'shenshaFontSize': shenshaFontSize,
+    'infoFontSize': infoFontSize,
+    'visibleShensha': visibleShensha,
   };
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -103,6 +146,11 @@ class AppSettings {
     shengLineColor: json['shengLineColor'] != null ? Color(json['shengLineColor'] as int) : null,
     keLineColor: json['keLineColor'] != null ? Color(json['keLineColor'] as int) : null,
     showColoredWuXing: json['showColoredWuXing'] as bool? ?? false,
+    shenshaFontSize: json['shenshaFontSize'] != null ? (json['shenshaFontSize'] as num).toDouble() : null,
+    infoFontSize: json['infoFontSize'] != null ? (json['infoFontSize'] as num).toDouble() : null,
+    visibleShensha: json['visibleShensha'] != null
+        ? (json['visibleShensha'] as List).cast<String>()
+        : null,
   );
 
   /// 加载设置
@@ -133,6 +181,9 @@ class AppSettings {
     Color? shengLineColor,
     Color? keLineColor,
     bool? showColoredWuXing,
+    double? shenshaFontSize,
+    double? infoFontSize,
+    List<String>? visibleShensha,
   }) {
     return AppSettings(
       staticYaoColor: staticYaoColor ?? this.staticYaoColor,
@@ -143,6 +194,9 @@ class AppSettings {
       shengLineColor: shengLineColor ?? this.shengLineColor,
       keLineColor: keLineColor ?? this.keLineColor,
       showColoredWuXing: showColoredWuXing ?? this.showColoredWuXing,
+      shenshaFontSize: shenshaFontSize ?? this.shenshaFontSize,
+      infoFontSize: infoFontSize ?? this.infoFontSize,
+      visibleShensha: visibleShensha ?? this.visibleShensha,
     );
   }
 }
