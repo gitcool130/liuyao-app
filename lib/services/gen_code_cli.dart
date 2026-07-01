@@ -40,6 +40,8 @@ void main(List<String> args) {
     for (final f in _features) {
       print('  ${f['code']} - ${f['name']}: ${f['desc']}');
     }
+    print('  多个功能用逗号分隔，如 F005,F006,F007');
+    print('  全部解锁: ALL');
     print('');
     print('过期日期格式: YYYYMMDD（可选，默认一年后）');
     exit(1);
@@ -48,12 +50,6 @@ void main(List<String> args) {
   final deviceId = args[0];
   final featureCode = args[1].toUpperCase();
 
-  final feature = _features.where((f) => f['code'] == featureCode).toList();
-  if (feature.isEmpty) {
-    print('错误: 无效的功能代码 "$featureCode"');
-    exit(1);
-  }
-
   final expireDate = args.length >= 3 ? args[2] : _defaultExpireDate();
 
   if (expireDate.length != 8 || int.tryParse(expireDate) == null) {
@@ -61,12 +57,39 @@ void main(List<String> args) {
     exit(1);
   }
 
-  final code = generateCode(deviceId, featureCode, expireDate);
+  // 支持 ALL 关键字：一键解锁全部功能
+  final codeToGenerate = (featureCode == 'ALL')
+      ? _features.map((f) => f['code']).join(',')
+      : featureCode;
+
+  // 验证功能代码（非ALL时检查）
+  if (featureCode != 'ALL') {
+    final codes = featureCode.split(',');
+    for (final c in codes) {
+      final f = _features.where((f) => f['code'] == c).toList();
+      if (f.isEmpty) {
+        print('错误: 无效的功能代码 "$c"');
+        print('可用功能代码: ${_features.map((f) => f['code']).join(', ')}');
+        print('全部解锁: ALL');
+        exit(1);
+      }
+    }
+  }
+
+  final code = generateCode(deviceId, codeToGenerate, expireDate);
+
+  // 显示解锁的功能列表
+  final featureNames = (codeToGenerate == _features.map((f) => f['code']).join(','))
+      ? '全部功能 (${_features.map((f) => f['name']).join(', ')})'
+      : codeToGenerate.split(',').map((c) {
+          final f = _features.firstWhere((f) => f['code'] == c);
+          return '${f['code']} - ${f['name']}';
+        }).join('\n           ');
 
   print('');
   print('═══════════════════════════════════════');
   print('  设备ID:     $deviceId');
-  print('  功能:       ${feature.first['code']} - ${feature.first['name']}');
+  print('  功能:       $featureNames');
   print('  过期日期:   $expireDate');
   print('  验证码:     $code');
   print('═══════════════════════════════════════');

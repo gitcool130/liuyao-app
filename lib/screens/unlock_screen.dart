@@ -57,6 +57,9 @@ class _UnlockScreenState extends State<UnlockScreen> {
     });
 
     bool anyUnlocked = false;
+    String? expireDate;
+
+    // 1. 先尝试各功能单独匹配
     for (final feature in lockedFeatures) {
       if (_unlockedFeatures.contains(feature.code)) continue;
 
@@ -72,10 +75,37 @@ class _UnlockScreenState extends State<UnlockScreen> {
         await FeatureLockService.unlock(feature.code, result.expireDate);
         _unlockedFeatures.add(feature.code);
         anyUnlocked = true;
+        expireDate = result.expireDate;
         setState(() {
           _message = '✅ ${feature.name} 已解锁！有效期至 ${result.expireDate}';
         });
         break;
+      }
+    }
+
+    // 2. 未匹配到单个功能，尝试匹配组合码（解锁全部功能）
+    if (!anyUnlocked) {
+      final deviceId = _deviceId;
+      if (deviceId != null) {
+        final allCodes = lockedFeatures.map((f) => f.code).join(',');
+        final result = FeatureLockService.verifyCode(
+          deviceId: deviceId,
+          featureCode: allCodes,
+          code: code,
+        );
+        if (result.valid) {
+          for (final feature in lockedFeatures) {
+            if (!_unlockedFeatures.contains(feature.code)) {
+              await FeatureLockService.unlock(feature.code, result.expireDate);
+              _unlockedFeatures.add(feature.code);
+            }
+          }
+          anyUnlocked = true;
+          expireDate = result.expireDate;
+          setState(() {
+            _message = '✅ 全部功能已解锁！有效期至 ${result.expireDate}';
+          });
+        }
       }
     }
 
