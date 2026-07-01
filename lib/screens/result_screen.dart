@@ -580,9 +580,10 @@ class _ResultScreenState extends State<ResultScreen> {
       final heName = entry.key;
       final zhongShen = group[1]; // 中神：子、午、酉、卯
 
-      // ---- 类型1: 本卦三个爻组成三合（三个齐全）----
+      // ---- 类型1: 本卦三个不同地支组成三合（必须三个不同地支齐全）----
       final benMatches = benZhi.entries.where((e) => group.contains(e.value)).map((e) => e.key).toList()..sort();
-      if (benMatches.length == 3) {
+      final benUnique = benZhi.entries.where((e) => group.contains(e.value)).map((e) => e.value).toSet();
+      if (benUnique.length == 3) {
         marked.addAll(benMatches);
         descs.add('本卦${benMatches.join("、")}爻 → $heName');
         continue; // 已凑齐，无需继续判断该组
@@ -621,10 +622,10 @@ class _ResultScreenState extends State<ResultScreen> {
         }
       }
 
-      // ---- 类型3: 本卦至少两爻 + 日月参与三合 ----
-      // 本卦中至少有两个爻的地支属于该组
-      final benGroupMatches = benZhi.entries.where((e) => group.contains(e.value)).map((e) => e.key).toList();
-      if (benGroupMatches.length >= 2) {
+      // ---- 类型3: 本卦至少两个不同地支 + 日月参与三合 ----
+      // 本卦中至少有两个不同的地支属于该组（去重后计数）
+      final benGroupValues = benZhi.entries.where((e) => group.contains(e.value)).map((e) => e.value).toSet();
+      if (benGroupValues.length >= 2) {
         final allZhi = {...benZhi.values, monthZhi, dayZhi}.where((z) => group.contains(z)).toList();
         if (allZhi.length == 3) {
           // 标记本卦中属于该三合组的地支
