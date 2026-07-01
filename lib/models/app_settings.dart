@@ -88,7 +88,7 @@ class AppSettings {
     List<String>? visibleShensha,
   })  : staticYaoColor = staticYaoColor ?? const Color(0xFF8B4513),
         dongYaoColor = dongYaoColor ?? Colors.orange.shade700,
-        yaoFontSize = yaoFontSize ?? 13,
+        yaoFontSize = yaoFontSize ?? 10,
         chongLineColor = chongLineColor ?? const Color(0xFFE53935),
         heLineColor = heLineColor ?? const Color(0xFF43A047),
         shengLineColor = shengLineColor ?? const Color(0xFFFFB300),
