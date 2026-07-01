@@ -832,14 +832,15 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
-  /// 完成编辑
+  /// 完成编辑 — 自动保存
   void _finishEditing(DivinationRecord record) {
     setState(() => _isEditing = false);
 
-    if (_savedRecordId != null && _interpretationController.text.isNotEmpty) {
+    final recordId = _savedRecordId ?? record.id;
+    if (recordId != null) {
       final historyProvider = Provider.of<HistoryProvider>(context, listen: false);
       historyProvider.updateInterpretation(
-        _savedRecordId!,
+        recordId,
         _interpretationController.text,
       );
     }
