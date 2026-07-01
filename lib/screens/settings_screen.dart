@@ -106,7 +106,6 @@ class _SettingsScreenState extends State<SettingsScreen>
         const SizedBox(height: 8),
         _colorItem('静爻颜色', _temp.staticYaoColor, (c) => _temp.staticYaoColor = c),
         _colorItem('动爻颜色', _temp.dongYaoColor, (c) => _temp.dongYaoColor = c),
-        _fontSizeItem('爻象字体大小', _temp.yaoFontSize, (v) => _temp.yaoFontSize = v, 10, 18),
 
         const Divider(height: 32),
 
@@ -161,6 +160,14 @@ class _SettingsScreenState extends State<SettingsScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        _sectionHeader('爻象字体大小'),
+        const SizedBox(height: 4),
+        const Text('控制卦爻符号（───○▅▅▅▅▅等）的显示大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 8),
+        _fontSizeItem('爻象字体', _temp.yaoFontSize, (v) => _temp.yaoFontSize = v, 10, 18),
+
+        const Divider(height: 32),
+
         _sectionHeader('神煞字体大小'),
         const SizedBox(height: 4),
         const Text('控制神煞栏显示字体大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
