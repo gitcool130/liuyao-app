@@ -46,7 +46,9 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    _interpretationController = TextEditingController();
+    _interpretationController = TextEditingController(
+      text: widget.record?.interpretation ?? '',
+    );
   }
 
   @override
