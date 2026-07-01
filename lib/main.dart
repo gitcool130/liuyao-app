@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'providers/divination_provider.dart';
@@ -110,6 +111,17 @@ class LiuYaoApp extends StatelessWidget {
         navigatorKey: navigatorKey,
         title: '六爻助手',
         debugShowCheckedModeBanner: false,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+          Locale('zh'),
+          Locale('en', 'US'),
+        ],
         // 根据屏幕宽度自动计算字体比例
         builder: (context, child) {
           final mediaQuery = MediaQuery.of(context);
