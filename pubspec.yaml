@@ -39,6 +39,7 @@ dependencies:
   share_plus: ^13.1.0
   sensors_plus: ^7.1.0
   crypto: ^3.0.6
+  webview_flutter: ^4.10.0
   
   # 图像识别功能依赖
   image_picker: ^1.1.2

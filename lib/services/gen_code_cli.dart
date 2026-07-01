@@ -15,6 +15,7 @@ const String _secretKey = 'LiuYaoApp_Unlock_Key_2026';
 const List<Map<String, String>> _features = [
   {'code': 'F005', 'name': '神煞详解', 'desc': '神煞含义详解与吉凶分析'},
   {'code': 'F006', 'name': '易青岚高级课笔记', 'desc': '45课时六爻进阶课程笔记'},
+  {'code': 'F007', 'name': '易青岚论坛', 'desc': '访问易青岚六爻学习社区'},
 ];
 
 String generateCode(String deviceId, String featureCode, String expireDate) {

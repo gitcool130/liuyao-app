@@ -40,6 +40,7 @@ class LockedFeature {
 const List<LockedFeature> lockedFeatures = [
   LockedFeature(code: 'F005', name: '神煞详解', description: '神煞含义详解与吉凶分析'),
   LockedFeature(code: 'F006', name: '易青岚高级课笔记', description: '45课时六爻进阶课程笔记'),
+  LockedFeature(code: 'F007', name: '易青岚论坛', description: '访问易青岚六爻学习社区'),
 ];
 
 /// 功能锁服务

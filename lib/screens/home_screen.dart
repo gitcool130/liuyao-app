@@ -10,6 +10,7 @@ import '../screens/settings_screen.dart';
 import '../screens/unlock_screen.dart';
 import '../screens/course_notes_screen.dart';
 import '../screens/shensha_detail_screen.dart';
+import '../screens/browser_screen.dart';
 import '../screens/image_import_screen.dart';
 import '../screens/import_screen.dart';
 import '../services/feature_lock_service.dart';
@@ -452,6 +453,20 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.brown,
           onTap: _unlockedFeatures.contains('F006')
               ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CourseNotesScreen()))
+              : null,
+        ),
+
+        const SizedBox(height: 8),
+
+        // 易青岚论坛
+        _buildVipItem(
+          icon: Icons.forum,
+          title: '易青岚论坛',
+          desc: '访问易青岚六爻学习社区',
+          unlocked: _unlockedFeatures.contains('F007'),
+          color: Colors.blue,
+          onTap: _unlockedFeatures.contains('F007')
+              ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BrowserScreen()))
               : null,
         ),
 
