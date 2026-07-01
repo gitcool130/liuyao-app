@@ -1045,6 +1045,8 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildGanZhiCard(DivinationRecord record) {
     final settings = context.read<SettingsProvider>().settings;
     final colored = settings.showColoredGanZhi;
+    final gzSize = settings.ganZhiFontSize;
+    final xkSize = settings.xunKongFontSize;
     final yearGz = record.yearGz;
     final monthGz = record.monthGz;
     final dayGz = record.dayGz;
@@ -1053,21 +1055,20 @@ class _ResultScreenState extends State<ResultScreen> {
     // 分别计算四柱各自的旬空
     final nianKong = XunKongCalculator.getXunKongStr(yearGz);
     final yueKong = XunKongCalculator.getXunKongStr(monthGz);
-    final riKong = XunKongCalculator.getXunKongStr(dayGz); // 传统旬空
+    final riKong = XunKongCalculator.getXunKongStr(dayGz);
     final shiKong = XunKongCalculator.getXunKongStr(hourGz);
 
-    // 四列：年柱 | 月柱 | 日柱 | 时柱
     Widget _pillar(String gz, String kong, bool useColor) {
       return Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             useColor
-                ? _buildColoredPillar(gz)
-                : Text(gz, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF8B4513))),
+                ? _buildColoredPillar(gz, gzSize)
+                : Text(gz, style: TextStyle(fontSize: gzSize, fontWeight: FontWeight.bold, color: const Color(0xFF8B4513))),
             const SizedBox(height: 2),
             Text(kong.isEmpty ? '' : kong,
-                style: TextStyle(fontSize: 11, color: kong.isEmpty ? Colors.transparent : Colors.grey.shade500)),
+                style: TextStyle(fontSize: xkSize, color: kong.isEmpty ? Colors.transparent : Colors.grey.shade500)),
           ],
         ),
       );
@@ -1092,8 +1093,9 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
+  /// 单柱彩色显示（带字体大小参数）
   /// 单柱彩色显示
-  Widget _buildColoredPillar(String gz) {
+  Widget _buildColoredPillar(String gz, double fontSize) {
     final spans = <TextSpan>[];
     for (int i = 0; i < gz.length; i++) {
       final char = gz[i];
@@ -1105,7 +1107,7 @@ class _ResultScreenState extends State<ResultScreen> {
       }
       spans.add(TextSpan(
         text: char,
-        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
+        style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold,
             color: color ?? const Color(0xFF8B4513)),
       ));
     }

@@ -65,6 +65,8 @@ class AppSettings {
   // ========== 字体大小 ==========
   double shenshaFontSize;    // 神煞栏字体大小
   double infoFontSize;       // 顶端pad信息字体大小（起卦时间、旬空等）
+  double ganZhiFontSize;     // 干支字体大小
+  double xunKongFontSize;    // 旬空字体大小
 
   // ========== 神煞显示 ==========
   List<String> visibleShensha; // 用户选择显示的神煞（field名列表）
@@ -81,6 +83,8 @@ class AppSettings {
     this.showColoredGanZhi = false,
     double? shenshaFontSize,
     double? infoFontSize,
+    double? ganZhiFontSize,
+    double? xunKongFontSize,
     List<String>? visibleShensha,
   })  : staticYaoColor = staticYaoColor ?? const Color(0xFF8B4513),
         dongYaoColor = dongYaoColor ?? Colors.orange.shade700,
@@ -91,6 +95,8 @@ class AppSettings {
         keLineColor = keLineColor ?? const Color(0xFF1E88E5),
         shenshaFontSize = shenshaFontSize ?? 12,
         infoFontSize = infoFontSize ?? 12,
+        ganZhiFontSize = ganZhiFontSize ?? 15,
+        xunKongFontSize = xunKongFontSize ?? 13,
         visibleShensha = visibleShensha ?? _defaultVisibleShensha();
 
   /// 默认显示全部神煞
@@ -135,6 +141,8 @@ class AppSettings {
     'showColoredGanZhi': showColoredGanZhi,
     'shenshaFontSize': shenshaFontSize,
     'infoFontSize': infoFontSize,
+    'ganZhiFontSize': ganZhiFontSize,
+    'xunKongFontSize': xunKongFontSize,
     'visibleShensha': visibleShensha,
   };
 
@@ -150,6 +158,8 @@ class AppSettings {
     showColoredGanZhi: json['showColoredGanZhi'] as bool? ?? false,
     shenshaFontSize: json['shenshaFontSize'] != null ? (json['shenshaFontSize'] as num).toDouble() : null,
     infoFontSize: json['infoFontSize'] != null ? (json['infoFontSize'] as num).toDouble() : null,
+    ganZhiFontSize: json['ganZhiFontSize'] != null ? (json['ganZhiFontSize'] as num).toDouble() : null,
+    xunKongFontSize: json['xunKongFontSize'] != null ? (json['xunKongFontSize'] as num).toDouble() : null,
     visibleShensha: json['visibleShensha'] != null
         ? (json['visibleShensha'] as List).cast<String>()
         : null,
@@ -186,6 +196,8 @@ class AppSettings {
     bool? showColoredGanZhi,
     double? shenshaFontSize,
     double? infoFontSize,
+    double? ganZhiFontSize,
+    double? xunKongFontSize,
     List<String>? visibleShensha,
   }) {
     return AppSettings(
@@ -200,6 +212,8 @@ class AppSettings {
       showColoredGanZhi: showColoredGanZhi ?? this.showColoredGanZhi,
       shenshaFontSize: shenshaFontSize ?? this.shenshaFontSize,
       infoFontSize: infoFontSize ?? this.infoFontSize,
+      ganZhiFontSize: ganZhiFontSize ?? this.ganZhiFontSize,
+      xunKongFontSize: xunKongFontSize ?? this.xunKongFontSize,
       visibleShensha: visibleShensha ?? this.visibleShensha,
     );
   }

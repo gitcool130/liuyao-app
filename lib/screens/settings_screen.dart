@@ -197,9 +197,25 @@ class _SettingsScreenState extends State<SettingsScreen>
 
         const Divider(height: 32),
 
+        _sectionHeader('干支字体大小'),
+        const SizedBox(height: 4),
+        const Text('控制四柱干支（丙午年等）的显示大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 8),
+        _fontSizeItem('干支字体', _temp.ganZhiFontSize, (v) => _temp.ganZhiFontSize = v, 12, 22),
+
+        const Divider(height: 32),
+
+        _sectionHeader('旬空字体大小'),
+        const SizedBox(height: 4),
+        const Text('控制四柱下方旬空文字的显示大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 8),
+        _fontSizeItem('旬空字体', _temp.xunKongFontSize, (v) => _temp.xunKongFontSize = v, 10, 18),
+
+        const Divider(height: 32),
+
         _sectionHeader('信息栏字体大小'),
         const SizedBox(height: 4),
-        const Text('控制起卦时间、农历、旬空、问念等文字大小（干支四柱不变）', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        const Text('控制起卦时间、农历、问念等文字大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 8),
         _fontSizeItem('信息字体', _temp.infoFontSize, (v) => _temp.infoFontSize = v, 10, 18),
 
