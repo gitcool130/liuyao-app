@@ -47,9 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       context: context,
       builder: (ctx) => _ColorPickerSheet(title: title, current: current),
     );
-    if (selected != null) {
-      setState(() => onPicked(selected));
-    }
+    if (selected != null) setState(() => onPicked(selected));
   }
 
   @override
@@ -119,12 +117,25 @@ class _SettingsScreenState extends State<SettingsScreen>
 
         const Divider(height: 32),
 
+        _sectionHeader('显示选项'),
+        const SizedBox(height: 8),
+
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('地支五行彩色显示', style: TextStyle(fontSize: 15)),
-          subtitle: const Text('水蓝 火红 木绿 金黄 土棕'),
+          subtitle: const Text('地支+五行文字都按五行颜色显示：水蓝 火红 木绿 金黄 土棕'),
           value: _temp.showColoredWuXing,
           onChanged: (v) => setState(() => _temp.showColoredWuXing = v),
+        ),
+
+        const Divider(height: 16),
+
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('干支彩色显示', style: TextStyle(fontSize: 15)),
+          subtitle: const Text('干支四柱和六亲等信息按五行颜色显示'),
+          value: _temp.showColoredGanZhi,
+          onChanged: (v) => setState(() => _temp.showColoredGanZhi = v),
         ),
 
         const Divider(height: 32),
@@ -143,9 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
         Center(
           child: TextButton.icon(
-            onPressed: () {
-              setState(() => _temp = AppSettings());
-            },
+            onPressed: () => setState(() => _temp = AppSettings()),
             icon: const Icon(Icons.restore),
             label: const Text('恢复默认'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -160,12 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           title: const Text('功能解锁', style: TextStyle(fontSize: 15)),
           subtitle: const Text('输入验证码解锁高级功能', style: TextStyle(fontSize: 12, color: Colors.grey)),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UnlockScreen()),
-            );
-          },
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const UnlockScreen())),
         ),
       ],
     );
@@ -212,44 +216,26 @@ class _SettingsScreenState extends State<SettingsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '2026年6月25日 21:45',
-                style: TextStyle(fontSize: _temp.infoFontSize),
-              ),
+              Text('2026年6月25日 21:45', style: TextStyle(fontSize: _temp.infoFontSize)),
               const SizedBox(height: 4),
               const Text(
                 '丙午年 甲午月 庚午日 丁亥时',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF8B4513),
-                ),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF8B4513)),
               ),
               const SizedBox(height: 4),
               RichText(
                 text: TextSpan(
                   children: [
-                    const TextSpan(
-                      text: '旬空：',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-                    ),
-                    TextSpan(
-                      text: '戌亥',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFF8B4513)),
-                    ),
-                    const TextSpan(
-                      text: '  卦宫：乾宫(金)',
-                      style: TextStyle(color: Colors.black87),
-                    ),
+                    const TextSpan(text: '旬空：', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                    TextSpan(text: '戌亥', style: TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFF8B4513))),
+                    const TextSpan(text: '  卦宫：乾宫(金)', style: TextStyle(color: Colors.black87)),
                   ],
                   style: TextStyle(fontSize: _temp.infoFontSize),
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                '神煞：天乙:丑未  驿马:申  咸池:卯',
-                style: TextStyle(fontSize: _temp.shenshaFontSize, color: Colors.black87),
-              ),
+              Text('神煞：天乙:丑未  驿马:申  咸池:卯',
+                  style: TextStyle(fontSize: _temp.shenshaFontSize, color: Colors.black87)),
             ],
           ),
         ),
@@ -260,24 +246,12 @@ class _SettingsScreenState extends State<SettingsScreen>
   // ==================== 神煞设置 ====================
 
   Widget _buildShenshaTab() {
-    // 所有神煞项，按显示顺序排列
     const items = [
-      ('tianYi', '天乙贵人'),
-      ('yiMa', '驿马'),
-      ('huaGai', '华盖'),
-      ('xianChi', '咸池'),
-      ('luShen', '禄神'),
-      ('tianYiShen', '天医'),
-      ('wenChang', '文昌'),
-      ('jiangXing', '将星'),
-      ('yangRen', '羊刃'),
-      ('hongLuan', '红鸾'),
-      ('tianXi', '天喜'),
-      ('jieSha', '劫煞'),
-      ('zaiSha', '灾煞'),
-      ('wangShen', '亡神'),
-      ('guChen', '孤辰'),
-      ('guaSu', '寡宿'),
+      ('tianYi', '天乙贵人'), ('yiMa', '驿马'), ('huaGai', '华盖'),
+      ('xianChi', '咸池'), ('luShen', '禄神'), ('tianYiShen', '天医'),
+      ('wenChang', '文昌'), ('jiangXing', '将星'), ('yangRen', '羊刃'),
+      ('hongLuan', '红鸾'), ('tianXi', '天喜'), ('jieSha', '劫煞'),
+      ('zaiSha', '灾煞'), ('wangShen', '亡神'), ('guChen', '孤辰'), ('guaSu', '寡宿'),
     ];
 
     return ListView(
@@ -287,67 +261,39 @@ class _SettingsScreenState extends State<SettingsScreen>
         const SizedBox(height: 4),
         const Text('选择在排盘结果中显示的神煞项', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 12),
-
-        // 全选/取消全选
-        Row(
-          children: [
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _temp.visibleShensha = items.map((e) => e.$1).toList();
-                });
-              },
-              icon: const Icon(Icons.select_all, size: 18),
-              label: const Text('全选', style: TextStyle(fontSize: 13)),
-            ),
-            const SizedBox(width: 8),
-            TextButton.icon(
-              onPressed: () {
-                setState(() => _temp.visibleShensha = []);
-              },
-              icon: const Icon(Icons.deselect, size: 18),
-              label: const Text('取消全选', style: TextStyle(fontSize: 13)),
-            ),
-          ],
-        ),
-
+        Row(children: [
+          TextButton.icon(
+            onPressed: () => setState(() => _temp.visibleShensha = items.map((e) => e.$1).toList()),
+            icon: const Icon(Icons.select_all, size: 18),
+            label: const Text('全选', style: TextStyle(fontSize: 13)),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () => setState(() => _temp.visibleShensha = []),
+            icon: const Icon(Icons.deselect, size: 18),
+            label: const Text('取消全选', style: TextStyle(fontSize: 13)),
+          ),
+        ]),
         const Divider(),
-
-        // 神煞列表
-        ...items.map((item) {
-          final isChecked = _temp.visibleShensha.contains(item.$1);
-          return CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(item.$2, style: const TextStyle(fontSize: 15)),
-            value: isChecked,
-            activeColor: const Color(0xFF8B4513),
-            onChanged: (v) {
-              setState(() {
-                if (v == true) {
-                  _temp.visibleShensha.add(item.$1);
-                } else {
-                  _temp.visibleShensha.remove(item.$1);
-                }
-              });
-            },
-          );
-        }),
+        ...items.map((item) => CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(item.$2, style: const TextStyle(fontSize: 15)),
+          value: _temp.visibleShensha.contains(item.$1),
+          activeColor: const Color(0xFF8B4513),
+          onChanged: (v) => setState(() {
+            v == true
+                ? _temp.visibleShensha.add(item.$1)
+                : _temp.visibleShensha.remove(item.$1);
+          }),
+        )),
       ],
     );
   }
 
   // ==================== 公用组件 ====================
 
-  Widget _sectionHeader(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF5D4037),
-      ),
-    );
-  }
+  Widget _sectionHeader(String text) => Text(text, style: const TextStyle(
+    fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5D4037)));
 
   Widget _colorItem(String label, Color current, ValueChanged<Color> onChanged) {
     return ListTile(
@@ -356,11 +302,9 @@ class _SettingsScreenState extends State<SettingsScreen>
       trailing: GestureDetector(
         onTap: () => _pickColor(label, current, onChanged),
         child: Container(
-          width: 36,
-          height: 36,
+          width: 36, height: 36,
           decoration: BoxDecoration(
-            color: current,
-            borderRadius: BorderRadius.circular(8),
+            color: current, borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.shade400),
           ),
         ),
@@ -374,21 +318,15 @@ class _SettingsScreenState extends State<SettingsScreen>
       title: Text(label, style: const TextStyle(fontSize: 15)),
       trailing: SizedBox(
         width: 180,
-        child: Row(
-          children: [
-            Text('${current.toInt()}', style: const TextStyle(fontSize: 15)),
-            Expanded(
-              child: Slider(
-                value: current,
-                min: min,
-                max: max,
-                divisions: (max - min).toInt(),
-                label: current.toInt().toString(),
-                onChanged: (v) => setState(() => onChanged(v)),
-              ),
-            ),
-          ],
-        ),
+        child: Row(children: [
+          Text('${current.toInt()}', style: const TextStyle(fontSize: 15)),
+          Expanded(child: Slider(
+            value: current, min: min, max: max,
+            divisions: (max - min).toInt(),
+            label: current.toInt().toString(),
+            onChanged: (v) => setState(() => onChanged(v)),
+          )),
+        ]),
       ),
     );
   }
@@ -396,26 +334,22 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget _buildPreviewRow(String symbol, String label, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Text(symbol, style: TextStyle(fontSize: _temp.yaoFontSize, color: color, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontSize: 13, color: Colors.black87)),
-        ],
-      ),
+      child: Row(children: [
+        Text(symbol, style: TextStyle(fontSize: _temp.yaoFontSize, color: color, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 13, color: Colors.black87)),
+      ]),
     );
   }
 
   Widget _buildLinePreview(String label, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Container(width: 40, height: 3, color: color),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontSize: 13, color: Colors.black87)),
-        ],
-      ),
+      child: Row(children: [
+        Container(width: 40, height: 3, color: color),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 13, color: Colors.black87)),
+      ]),
     );
   }
 }
@@ -424,7 +358,6 @@ class _SettingsScreenState extends State<SettingsScreen>
 class _ColorPickerSheet extends StatelessWidget {
   final String title;
   final Color current;
-
   const _ColorPickerSheet({required this.title, required this.current});
 
   @override
@@ -445,24 +378,16 @@ class _ColorPickerSheet extends StatelessWidget {
               return GestureDetector(
                 onTap: () => Navigator.of(context).pop(opt.color),
                 child: Container(
-                  width: 48,
-                  height: 48,
+                  width: 48, height: 48,
                   decoration: BoxDecoration(
-                    color: opt.color,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? Colors.black : Colors.grey.shade300,
-                      width: isSelected ? 3 : 1,
-                    ),
+                    color: opt.color, borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300, width: isSelected ? 3 : 1),
                   ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.white, size: 24)
-                      : null,
+                  child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 24) : null,
                 ),
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );

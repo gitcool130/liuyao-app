@@ -272,7 +272,7 @@ class YaoTable extends StatelessWidget {
     return zhiWidget;
   }
 
-  /// 构建彩色五行地支文本
+  /// 构建彩色五行地支文本（地支+五行都按五行颜色显示）
   Widget _buildColoredZhiText(String zhiWuXing, bool isXunKong, Color color) {
     final diZhi = zhiWuXing.substring(0, zhiWuXing.length - 1);
     final wuXing = zhiWuXing.substring(zhiWuXing.length - 1);
@@ -284,7 +284,8 @@ class YaoTable extends StatelessWidget {
             text: diZhi,
             style: TextStyle(
               fontSize: 14,
-              color: isXunKong ? Colors.grey : Colors.black87,
+              color: isXunKong ? Colors.grey : color,
+              fontWeight: FontWeight.bold,
               fontStyle: isXunKong ? FontStyle.italic : FontStyle.normal,
             ),
           ),

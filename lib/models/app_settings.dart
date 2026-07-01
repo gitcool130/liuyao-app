@@ -60,6 +60,7 @@ class AppSettings {
 
   // ========== 显示开关 ==========
   bool showColoredWuXing;    // 地支五行彩色显示
+  bool showColoredGanZhi;    // 干支四柱五行彩色显示
 
   // ========== 字体大小 ==========
   double shenshaFontSize;    // 神煞栏字体大小
@@ -77,6 +78,7 @@ class AppSettings {
     Color? shengLineColor,
     Color? keLineColor,
     this.showColoredWuXing = false,
+    this.showColoredGanZhi = false,
     double? shenshaFontSize,
     double? infoFontSize,
     List<String>? visibleShensha,
@@ -130,6 +132,7 @@ class AppSettings {
     'shengLineColor': shengLineColor.value,
     'keLineColor': keLineColor.value,
     'showColoredWuXing': showColoredWuXing,
+    'showColoredGanZhi': showColoredGanZhi,
     'shenshaFontSize': shenshaFontSize,
     'infoFontSize': infoFontSize,
     'visibleShensha': visibleShensha,
@@ -144,6 +147,7 @@ class AppSettings {
     shengLineColor: json['shengLineColor'] != null ? Color(json['shengLineColor'] as int) : null,
     keLineColor: json['keLineColor'] != null ? Color(json['keLineColor'] as int) : null,
     showColoredWuXing: json['showColoredWuXing'] as bool? ?? false,
+    showColoredGanZhi: json['showColoredGanZhi'] as bool? ?? false,
     shenshaFontSize: json['shenshaFontSize'] != null ? (json['shenshaFontSize'] as num).toDouble() : null,
     infoFontSize: json['infoFontSize'] != null ? (json['infoFontSize'] as num).toDouble() : null,
     visibleShensha: json['visibleShensha'] != null
@@ -179,6 +183,7 @@ class AppSettings {
     Color? shengLineColor,
     Color? keLineColor,
     bool? showColoredWuXing,
+    bool? showColoredGanZhi,
     double? shenshaFontSize,
     double? infoFontSize,
     List<String>? visibleShensha,
@@ -192,6 +197,7 @@ class AppSettings {
       shengLineColor: shengLineColor ?? this.shengLineColor,
       keLineColor: keLineColor ?? this.keLineColor,
       showColoredWuXing: showColoredWuXing ?? this.showColoredWuXing,
+      showColoredGanZhi: showColoredGanZhi ?? this.showColoredGanZhi,
       shenshaFontSize: shenshaFontSize ?? this.shenshaFontSize,
       infoFontSize: infoFontSize ?? this.infoFontSize,
       visibleShensha: visibleShensha ?? this.visibleShensha,

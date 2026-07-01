@@ -949,6 +949,42 @@ class _ResultScreenState extends State<ResultScreen> {
     return shensha;
   }
 
+  /// 天干五行映射
+  static const Map<String, String> _tianGanWuXing = {
+    '甲': '木', '乙': '木',
+    '丙': '火', '丁': '火',
+    '戊': '土', '己': '土',
+    '庚': '金', '辛': '金',
+    '壬': '水', '癸': '水',
+  };
+
+  /// 构建彩色干支四柱显示
+  Widget _buildColoredGanZhi(DivinationRecord record, double infoFontSize) {
+    final ganZhiStr = '${record.yearGz}年 ${record.monthGz}月 ${record.dayGz}日 ${record.hourGz}时';
+    final spans = <TextSpan>[];
+
+    for (int i = 0; i < ganZhiStr.length; i++) {
+      final char = ganZhiStr[i];
+      Color? color;
+      // 天干（甲乙丙丁戊己庚辛壬癸）或地支（子丑寅卯辰巳午未申酉戌亥）
+      if (_tianGanWuXing.containsKey(char)) {
+        color = AppSettings.wuXingColors[_tianGanWuXing[char]];
+      } else if (diZhiWuXing.containsKey(char)) {
+        color = AppSettings.wuXingColors[diZhiWuXing[char]];
+      }
+      spans.add(TextSpan(
+        text: char,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          color: color ?? const Color(0xFF8B4513),
+        ),
+      ));
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
   /// 构建信息卡片（紧凑版）
   Widget _buildInfoCard(DivinationRecord record) {
     // 农历显示：干支年 + 农历月日
@@ -1004,15 +1040,17 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
             const SizedBox(height: 3),
 
-            // 第二行：干支四柱（保持不变，已经特殊处理放大）
-            Text(
-              '${record.yearGz}年 ${record.monthGz}月 ${record.dayGz}日 ${record.hourGz}时',
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF8B4513),
-              ),
-            ),
+            // 第二行：干支四柱（15pt不变，可根据设置彩色显示）
+            settings.showColoredGanZhi
+                ? _buildColoredGanZhi(record, infoFontSize)
+                : Text(
+                    '${record.yearGz}年 ${record.monthGz}月 ${record.dayGz}日 ${record.hourGz}时',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8B4513),
+                    ),
+                  ),
 
             // 节气提示（如有）
             if (jieQiStr.isNotEmpty)
