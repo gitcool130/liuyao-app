@@ -56,6 +56,10 @@ class ShenshaCard extends StatelessWidget {
     'hongLuan': '红鸾',
     'tianXi': '天喜',
     'jieSha': '劫煞',
+    'zaiSha': '灾煞',
+    'wangShen': '亡神',
+    'guChen': '孤辰',
+    'guaSu': '寡宿',
   };
 
   @override
