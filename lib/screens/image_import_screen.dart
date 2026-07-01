@@ -4,12 +4,14 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../models/divination_record.dart';
 import '../models/image_recognition_result.dart';
 import '../providers/divination_provider.dart';
 import '../services/ocr_paipan_service.dart';
+import '../services/paipan_parser.dart';
 import '../services/paipan_corrector.dart';
 
 /// 图像导入页面
@@ -171,6 +173,12 @@ class _ImageImportScreenState extends State<ImageImportScreen> {
                   label: const Text('相册'),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _importFromClipboard,
+              icon: const Icon(Icons.content_paste),
+              label: const Text('从剪贴板导入'),
             ),
           ],
         ),
@@ -586,6 +594,44 @@ class _ImageImportScreenState extends State<ImageImportScreen> {
       _selectedImage = null;
       _recognitionResult = null;
     });
+  }
+
+  /// 从剪贴板导入（剪贴板内容视同OCR识别结果）
+  Future<void> _importFromClipboard() async {
+    final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+    if (clipboardData == null || clipboardData.text == null || clipboardData.text!.trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('剪贴板为空，请先复制排盘文字')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isRecognizing = true;
+      _progressText = '解析剪贴板内容...';
+    });
+
+    try {
+      final parser = PaipanParser();
+      final result = parser.parse(clipboardData.text!, []);
+
+      setState(() {
+        _recognitionResult = result;
+        _isRecognizing = false;
+        if (result.success && result.data != null) {
+          _progressText = '✅ 导入成功！请核对下方数据';
+          _initEditControllers(result.data!);
+        } else {
+          _progressText = '❌ 解析失败：${result.errorMessage ?? "无法识别排盘格式"}';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isRecognizing = false;
+        _progressText = '❌ 导入失败：$e';
+      });
+    }
   }
 
   /// 开始识别（使用本地OCR）
