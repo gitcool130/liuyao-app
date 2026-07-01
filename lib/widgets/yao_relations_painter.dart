@@ -191,13 +191,16 @@ class _RelationsPainter extends CustomPainter {
       return Offset(bianGuaZhiX, yaoTableStartY + 4 + headerH + rowH * (i + 0.5));
     });
 
-    // 月建位置：从ShenshaCard末尾的干支卡片中的月建文字出发
-    // 干支卡片位于 infoCard + 4 + shenshaCard + 4 之后
+    // 月建/日辰位置：从干支卡片中的对应柱子出发
+    // 干支卡片四柱等分：年(0-25%) 月(25-50%) 日(50-75%) 时(75-100%)
+    // Card左右padding各8px
+    final gzPadding = 8.0;
+    final gzContentW = size.width - gzPadding * 2;
+    // 月柱中心在 37.5% 处，日柱中心在 62.5% 处
     final ganZhiAreaTop = measuredInfoCardH + 4 + measuredShenshaCardH + 4;
-    final monthPos = Offset(65, ganZhiAreaTop + measuredGanZhiCardH * 0.3);
-
-    // 日辰位置
-    final dayPos = Offset(145, ganZhiAreaTop + measuredGanZhiCardH * 0.3);
+    final gzTextY = ganZhiAreaTop + measuredGanZhiCardH * 0.25;
+    final monthPos = Offset(gzPadding + gzContentW * 0.375, gzTextY);
+    final dayPos = Offset(gzPadding + gzContentW * 0.625, gzTextY);
 
     // 绘制关系
     for (int i = 0; i < relations.length; i++) {
