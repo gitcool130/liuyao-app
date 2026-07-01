@@ -52,10 +52,10 @@ class FeatureLockService {
     const p1 = 'LiuYao';
     const p2 = 'App_U';
     const p3 = 'nlock';
-    const p4 = '_Key_';
-    const p5 = '2026_';
-    const p6 = 'HMAC_SHA';
-    // 实际使用的密钥只取 p1-p5，p6 为干扰段
+    const p4 = '_Key_2';
+    const p5 = '026';
+    const p6 = 'HMACSHA';
+    // 实际使用 p1-p5，p6 为干扰段
     return '$p1$p2$p3$p4$p5';
   }
 
