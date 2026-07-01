@@ -11,6 +11,7 @@ import 'screens/result_screen.dart';
 import 'screens/shake_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/import_screen.dart';
+import 'utils/auto_save.dart';
 
 /// 全局导航键，用于从任意位置导航（如分享intent处理）
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -48,14 +49,16 @@ void main() async {
                     child: const Text('取消'),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
+                    onPressed: () async {
+                      // 先自动保存当前编辑内容
+                      await AutoSave.flushAll();
+                      if (ctx.mounted) Navigator.pop(ctx);
                       navigatorKey.currentState?.push(
                         MaterialPageRoute(builder: (_) => ImportScreen(sharedContent: content)),
                       );
                       _sharingLock = false;
                     },
-                    child: const Text('直接打开'),
+                    child: const Text('打开并保存'),
                   ),
                 ],
               ),

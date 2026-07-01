@@ -17,6 +17,8 @@ import '../algorithms/shouxing_calendar.dart';
 import '../algorithms/shensha_calculator.dart';
 import '../models/shensha_result.dart';
 import '../providers/settings_provider.dart';
+import '../utils/auto_save.dart';
+import '../main.dart';
 import '../utils/export_helper.dart';
 import '../models/app_settings.dart';
 
@@ -51,12 +53,31 @@ class _ResultScreenState extends State<ResultScreen> {
     _interpretationController = TextEditingController(
       text: widget.record?.interpretation ?? '',
     );
+    // 注册自动保存回调（分享跳转前自动保存解卦笔记）
+    AutoSave.register(_autoSave);
   }
 
   @override
   void dispose() {
+    AutoSave.unregister(_autoSave);
     _interpretationController.dispose();
     super.dispose();
+  }
+
+  /// 自动保存当前解卦笔记
+  Future<void> _autoSave() async {
+    final text = _interpretationController.text;
+    if (text.isEmpty) return;
+
+    final recordId = _savedRecordId ?? widget.record?.id;
+    if (recordId == null) return;
+
+    try {
+      final historyProvider = Provider.of<HistoryProvider>(navigatorKey.currentContext!, listen: false);
+      await historyProvider.updateInterpretation(recordId, text);
+    } catch (_) {
+      // 保存失败时静默处理，不影响跳转
+    }
   }
 
   /// 计算量化值
