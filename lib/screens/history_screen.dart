@@ -6,7 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import '../providers/history_provider.dart';
 import '../models/divination_record.dart';
 import '../utils/export_helper.dart';
-import 'detail_screen.dart';
+import 'result_screen.dart';
 
 /// 历史记录列表页
 class HistoryScreen extends StatefulWidget {
@@ -29,12 +29,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('历史记录'),
+        title: Consumer<HistoryProvider>(
+          builder: (context, provider, child) {
+            if (provider.searchKeyword.isNotEmpty) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('历史记录'),
+                  Text(
+                    '搜索：${provider.searchKeyword} (${provider.records.length}条)',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+                  ),
+                ],
+              );
+            }
+            return const Text('历史记录');
+          },
+        ),
         actions: [
-          // 搜索按钮
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: _showSearchDialog,
+          // 清除搜索按钮（搜索模式下显示）
+          Consumer<HistoryProvider>(
+            builder: (context, provider, child) {
+              if (provider.searchKeyword.isNotEmpty) {
+                return IconButton(
+                  icon: const Icon(Icons.clear),
+                  tooltip: '清除搜索',
+                  onPressed: () => provider.search(''),
+                );
+              }
+              return IconButton(
+                icon: const Icon(Icons.search),
+                tooltip: '搜索',
+                onPressed: _showSearchDialog,
+              );
+            },
           ),
         ],
       ),
@@ -242,37 +270,73 @@ class _HistoryScreenState extends State<HistoryScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DetailScreen(record: record),
+        builder: (context) => ResultScreen(record: record),
       ),
     );
   }
 
   void _showSearchDialog() {
     final provider = Provider.of<HistoryProvider>(context, listen: false);
+    final searchController = TextEditingController(text: provider.searchKeyword);
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('搜索记录'),
-        content: TextField(
-          decoration: const InputDecoration(
-            hintText: '输入问题关键词或起卦人姓名',
-            border: OutlineInputBorder(),
-          ),
-          onChanged: (value) {
-            provider.search(value);
-          },
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: searchController,
+              decoration: const InputDecoration(
+                hintText: '输入关键词',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '搜索范围：问题内容、起卦人姓名',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () {
-              provider.search('');
-              Navigator.pop(context);
+              searchController.clear();
             },
-            child: const Text('清除'),
+            child: const Text('清空'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('确定'),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              // 清除搜索，显示全部记录
+              provider.search('');
+            },
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final keyword = searchController.text.trim();
+              Navigator.pop(dialogContext);
+              // 执行搜索
+              await provider.search(keyword);
+              // 显示搜索结果提示
+              if (keyword.isNotEmpty && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('找到 ${provider.records.length} 条匹配记录'),
+                    duration: const Duration(seconds: 2),
+                    action: SnackBarAction(
+                      label: '清除',
+                      onPressed: () => provider.search(''),
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text('搜索'),
           ),
         ],
       ),
@@ -288,7 +352,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final fileName = ExportHelper.getBatchFileName(records.length);
     final file = File('${dir.path}/$fileName');
     await file.writeAsString(markdown);
-    await Share.shareXFiles([XFile(file.path)], subject: '六爻排盘记录集');
+    await Share.shareXFiles([XFile(file.path)], subject: '六爻助手记录集');
   }
 
   void _confirmDeleteSelected(BuildContext context, HistoryProvider provider) {

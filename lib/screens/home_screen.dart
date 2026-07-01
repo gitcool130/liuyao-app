@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import '../algorithms/ganzhi_converter.dart';
 import '../providers/divination_provider.dart';
 import '../screens/about_screen.dart';
+import '../screens/settings_screen.dart';
 import '../screens/image_import_screen.dart';
+import '../screens/import_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late DateTime _divTime;
   late GanZhiResult _ganZhi;
+  bool _shareHandled = false;
   String _question = '';
   String _querentName = '';
   String _querentGender = '男';
@@ -25,6 +29,30 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _divTime = DateTime.now();
     _updateGanZhi();
+    _checkShareIntent();
+  }
+
+  static const _channel = MethodChannel('com.bobo.liuyao_app/share');
+
+  void _checkShareIntent() async {
+    try {
+      final content = await _channel.invokeMethod<String>('getSharedFileContent');
+      if (content != null && content.isNotEmpty) {
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_shareHandled) {
+              _shareHandled = true;
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ImportScreen(sharedContent: content)),
+              );
+            }
+          });
+        }
+      }
+    } catch (_) {
+      // 没有分享Intent，忽略
+    }
   }
 
   void _updateGanZhi() {
@@ -88,8 +116,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('六爻排盘'),
+        title: const Text('六爻助手'),
         actions: [
+          // 颜色设置
+          IconButton(
+            icon: const Icon(Icons.palette_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+            tooltip: '颜色设置',
+          ),
           // 说明菜单
           IconButton(
             icon: const Icon(Icons.help_outline),
@@ -134,8 +173,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(fontSize: 18),
                     ),
                     const SizedBox(height: 8),
+                    // 农历：干支年 + 农历月日 + 时辰
                     Text(
-                      '农历：${_ganZhi.lunarDate}',
+                      '农历：${_ganZhi.yearGz}年 ${_ganZhi.lunarDate} ${_ganZhi.hourGz}时',
                       style: TextStyle(
                         fontSize: 16,
                         color: Color(0xFF5D4037),

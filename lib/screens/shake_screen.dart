@@ -57,7 +57,7 @@ class _ShakeScreenState extends State<ShakeScreen> {
   void _initCoins() {
     final fronts = List<String>.from(_fronts)..shuffle();
     _coins = fronts.take(3).map((f) {
-      return _Coin(front: f, back: _backs[Random().nextInt(_backs.length)], isHeads: true);
+      return _Coin(front: f, back: _backs[Random.secure().nextInt(_backs.length)], isHeads: true);
     }).toList();
   }
 
@@ -126,7 +126,7 @@ class _ShakeScreenState extends State<ShakeScreen> {
   // ============== 阶段操作 ==============
 
   void _throw() {
-    final rng = Random();
+    final rng = Random.secure();  // 使用安全随机源，避免伪随机的序列重复
     setState(() {
       for (final c in _coins) {
         c.isHeads = rng.nextBool();
@@ -344,8 +344,10 @@ class _ResultCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(_ShakeScreenState._yaoType(backCount), style: const TextStyle(fontSize: 15)),
           const SizedBox(height: 6),
+          // 爻象符号
           Text(_ShakeScreenState._yaoSymbol(backCount),
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF5D4037))),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5D4037)),
+            maxLines: 1),
         ],
       ),
     );
@@ -483,8 +485,12 @@ class _ProgressPanel extends StatelessWidget {
                         ),
                         SizedBox(
                           width: 72,
-                          child: Text(_ShakeScreenState._yaoSymbol(backCounts[i]),
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B4513))),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(_ShakeScreenState._yaoSymbol(backCounts[i]),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B4513)),
+                              maxLines: 1),
+                          ),
                         ),
                       ],
                     ),

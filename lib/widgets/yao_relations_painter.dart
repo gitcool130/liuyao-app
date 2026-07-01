@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../algorithms/dizhi_relations.dart';
+import '../models/app_settings.dart';
 
 /// 关系连线容器组件
 /// 使用Stack包裹InfoCard+ShenshaCard+YaoTable，让连线可以跨越整个区域
@@ -27,6 +28,9 @@ class YaoRelationsOverlay extends StatefulWidget {
   /// 是否显示量化（影响支列宽度）
   final bool showQuantification;
 
+  /// 自定义颜色设置
+  final AppSettings settings;
+
   const YaoRelationsOverlay({
     super.key,
     required this.relations,
@@ -36,6 +40,7 @@ class YaoRelationsOverlay extends StatefulWidget {
     required this.monthZhi,
     required this.dayZhi,
     this.showQuantification = false,
+    required this.settings,
   });
 
   @override
@@ -93,6 +98,7 @@ class _YaoRelationsOverlayState extends State<YaoRelationsOverlay> {
             child: CustomPaint(
               painter: _RelationsPainter(
                 relations: widget.relations,
+                settings: widget.settings,
                 monthZhi: widget.monthZhi,
                 dayZhi: widget.dayZhi,
                 showQuantification: widget.showQuantification,
@@ -122,6 +128,7 @@ class _YaoRelationsOverlayState extends State<YaoRelationsOverlay> {
 /// 简化版关系绘制器
 class _RelationsPainter extends CustomPainter {
   final List<YaoRelation> relations;
+  final AppSettings settings;
   final String monthZhi;
   final String dayZhi;
   final bool showQuantification;
@@ -133,6 +140,7 @@ class _RelationsPainter extends CustomPainter {
 
   _RelationsPainter({
     required this.relations,
+    required this.settings,
     required this.monthZhi,
     required this.dayZhi,
     this.showQuantification = false,
@@ -244,11 +252,11 @@ class _RelationsPainter extends CustomPainter {
       return;
     }
 
-    // 计算控制点
-    final controlPoint = _calculateControlPoint(start, end, index, size);
+    // 计算控制点（传入关系类型）
+    final controlPoint = _calculateControlPoint(start, end, index, size, relation.relationType);
 
-    // 颜色
-    final color = Color(relation.color);
+    // 颜色（使用自定义设置或默认值）
+    final color = settings.getLineColor(relation.relationType);
 
     // 绘制贝塞尔曲线
     final path = Path();
@@ -267,7 +275,7 @@ class _RelationsPainter extends CustomPainter {
     _drawArrow(canvas, start, end, controlPoint, color);
   }
 
-  Offset _calculateControlPoint(Offset start, Offset end, int index, Size size) {
+  Offset _calculateControlPoint(Offset start, Offset end, int index, Size size, int relationType) {
     final midX = (start.dx + end.dx) / 2;
     final midY = (start.dy + end.dy) / 2;
 
@@ -288,24 +296,33 @@ class _RelationsPainter extends CustomPainter {
         return Offset(start.dx + arcOffset, midY - 10);
       }
     } else {
-      // 爻到爻的连线（动爻到静爻等），使用水平偏移的弧线
-      // 根据索引分散弧度，避免多条线重叠
-      final verticalOffset = 15.0 + (index % 3) * 12;
-      final horizontalOffset = 30.0 + (index % 2) * 20;
+      // 爻到爻的连线（动爻到静爻、变爻到动爻等）
+      // 根据关系类型区分弧度方向：
+      // - 冲合（relationChong=1, relationHe=2, relationSanHe=3, relationBanHe=4）：弧度向上弯曲
+      // - 生克（relationSheng=5, relationKe=6）：弧度向下弯曲
 
-      // 根据起点和终点的相对位置决定弧线方向
-      final isGoingDown = end.dy > start.dy;
+      final isChongHe = relationType >= 1 && relationType <= 4; // 冲合类
+      final isShengKe = relationType >= 5 && relationType <= 6; // 生克类
+
+      // 弧度偏移量
+      final verticalOffset = 15.0 + (index % 3) * 8;
+      final horizontalOffset = 25.0 + (index % 2) * 15;
+
+      // 根据起点和终点的相对位置决定弧线基础方向
       final isGoingRight = end.dx > start.dx;
 
-      // 弧线向起点方向的相反侧弯曲，并根据索引偏移
-      if (isGoingDown) {
-        // 向下的连线，弧线向上弯曲
+      if (isChongHe) {
+        // 冲合线：弧度向上弯曲（负方向）
         return Offset(midX + (isGoingRight ? -horizontalOffset : horizontalOffset),
                       midY - verticalOffset);
-      } else {
-        // 向上的连线，弧线向下弯曲
-        return Offset(midX + (isGoingRight ? -horizontalOffset : horizontalOffset),
+      } else if (isShengKe) {
+        // 生克线：弧度向下弯曲（正方向）
+        return Offset(midX + (isGoingRight ? horizontalOffset : -horizontalOffset),
                       midY + verticalOffset);
+      } else {
+        // 默认：向上弯曲
+        return Offset(midX + (isGoingRight ? -horizontalOffset : horizontalOffset),
+                      midY - verticalOffset);
       }
     }
   }

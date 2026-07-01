@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/divination_provider.dart';
 import 'providers/history_provider.dart';
+import 'providers/settings_provider.dart';
 import 'algorithms/shouxing_calendar.dart';
 import 'screens/home_screen.dart';
 import 'screens/manual_input_screen.dart';
@@ -14,11 +15,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 初始化节气表
   await ShouXingCalendar.init();
-  runApp(const LiuYaoApp());
+  // 预加载设置（确保进入设置页时已有值）
+  final settingsProvider = SettingsProvider();
+  await settingsProvider.load();
+  runApp(LiuYaoApp(settingsProvider: settingsProvider));
 }
 
 class LiuYaoApp extends StatelessWidget {
-  const LiuYaoApp({super.key});
+  final SettingsProvider settingsProvider;
+  const LiuYaoApp({super.key, required this.settingsProvider});
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +31,45 @@ class LiuYaoApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => DivinationProvider()),
         ChangeNotifierProvider(create: (_) => HistoryProvider()),
+        ChangeNotifierProvider.value(value: settingsProvider),
       ],
       child: MaterialApp(
-        title: '六爻排盘',
+        title: '六爻助手',
         debugShowCheckedModeBanner: false,
+        // 根据屏幕宽度自动计算字体比例
+        builder: (context, child) {
+          final mediaQuery = MediaQuery.of(context);
+          final screenWidth = mediaQuery.size.width;
+          final screenHeight = mediaQuery.size.height;
+          final isLandscape = screenWidth > screenHeight;
+
+          // YaoTable 所需的理想宽度（最宽情况：有量化+有动爻）
+          // 列宽：神28 + 伏36 + 六亲36 + 支50 + 世应24 + 本卦80 + 变卦130 = 384
+          // 加上 Card padding (4*2) = 8，总计约 392
+          // 竖屏无量化：28+36+36+36+24+80+130 = 350，+8 = 358
+          // 使用 365 作为基准，确保不超出边框
+          const yaoTableIdealWidth = 365.0;
+
+          // 横屏且有足够宽度时，使用系统字体设置
+          if (isLandscape && screenWidth > yaoTableIdealWidth + 100) {
+            // 横屏宽度足够，使用系统字体
+            return child!;
+          }
+
+          // 竖屏或横屏宽度不够时，计算缩放比例
+          const margin = 8.0;
+          double textScaleFactor = (screenWidth - margin) / yaoTableIdealWidth;
+
+          // 限制范围：最小0.65，最大1.1（允许稍大于原始大小）
+          textScaleFactor = textScaleFactor.clamp(0.65, 1.1);
+
+          return MediaQuery(
+            data: mediaQuery.copyWith(
+              textScaler: TextScaler.linear(textScaleFactor),
+            ),
+            child: child!,
+          );
+        },
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(

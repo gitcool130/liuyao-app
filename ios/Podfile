@@ -4,6 +4,7 @@ platform :ios, '15.5'  # ML Kit 中文识别最低要求
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -31,7 +32,7 @@ target 'Runner' do
   use_frameworks!
 
   # Google ML Kit 中文文字识别
-  pod 'GoogleMLKit/TextRecognitionChinese', '~> 7.0.0'
+  pod 'GoogleMLKit/TextRecognitionChinese', '~> 9.0.0'
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
@@ -42,9 +43,19 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-    # ML Kit要求排除armv7架构
-    target.build_configurations.each do |config|
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'armv7'
+    # 仅对MLKit相关pod排除arm64模拟器架构
+    if target.name.include?('MLImage') || target.name.include?('MLKit')
+      target.build_configurations.each do |config|
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64 armv7'
+      end
+    end
+  end
+  # 从Pods-Runner的xcconfig中移除全局架构排除，保留在Apple Silicon模拟器上的arm64支持
+  installer.pods_project.targets.each do |target|
+    if target.name == 'Pods-Runner'
+      target.build_configurations.each do |config|
+        config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+      end
     end
   end
 end

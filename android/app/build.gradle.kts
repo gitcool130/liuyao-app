@@ -1,12 +1,11 @@
 plugins {
     id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
     namespace = "com.bobo.liuyao_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -15,27 +14,42 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.bobo.liuyao_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 26  // google_mlkit_genai requires minSdk 26
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        versionCode = 3
+        versionName = "1.2.0"
 
-        // 只保留arm64-v8a架构，减小APK大小
         ndk {
             abiFilters += listOf("arm64-v8a")
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val propsFile = rootProject.file("key.properties")
+            if (propsFile.exists()) {
+                val lines = propsFile.readLines()
+                fun getProp(name: String): String? {
+                    for (line in lines) {
+                        val trimmed = line.trim()
+                        if (trimmed.startsWith("$name=")) {
+                            return trimmed.substring(name.length + 1)
+                        }
+                    }
+                    return null
+                }
+                keyAlias = getProp("keyAlias") ?: ""
+                keyPassword = getProp("keyPassword") ?: ""
+                storeFile = getProp("storeFile")?.let { rootProject.file(it) }
+                storePassword = getProp("storePassword") ?: ""
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
-            // 启用proguard规则解决R8混淆问题
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -51,7 +65,6 @@ flutter {
     source = "../.."
 }
 
-// Google ML Kit 中文文字识别
 dependencies {
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
 }

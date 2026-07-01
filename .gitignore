@@ -33,6 +33,12 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Build artifacts
+android/build/
+ios/build/
+ios/Podfile.lock
+**/PIFCache/
+
 # Symbolication related
 app.*.symbols
 

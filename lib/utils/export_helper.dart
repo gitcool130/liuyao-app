@@ -1,17 +1,21 @@
+import 'dart:convert';
 import '../models/divination_record.dart';
 import '../algorithms/liuqin_config.dart';
 import '../algorithms/constants.dart';
 
-/// Markdown 导出帮助类
+/// Markdown 导出/导入帮助类
 class ExportHelper {
   /// 导出单条记录为 Markdown
-  static String exportToMarkdown(DivinationRecord record) {
+  static String exportToMarkdown(DivinationRecord record, {String? exporterName}) {
     final buffer = StringBuffer();
 
     buffer.writeln('# 六爻排盘记录');
     buffer.writeln();
 
     // 基本信息
+    if (exporterName != null && exporterName.isNotEmpty) {
+      buffer.writeln('**导出者**：$exporterName');
+    }
     if (record.querentName.isNotEmpty) {
       buffer.writeln('**起卦人**：${record.querentName}${record.querentGender.isNotEmpty ? '（${record.querentGender}）' : ''}');
     }
@@ -55,6 +59,12 @@ class ExportHelper {
       buffer.writeln();
       buffer.writeln(record.interpretation!);
     }
+
+    // JSON 元数据（用于导入恢复，对阅读者不可见）
+    buffer.writeln();
+    buffer.writeln('<!-- LIUYAO_DATA:');
+    buffer.writeln(jsonEncode(record.toJson()));
+    buffer.writeln('LIYAO_DATA_END -->');
 
     return buffer.toString();
   }
@@ -163,6 +173,35 @@ class ExportHelper {
     }
 
     return buffer.toString();
+  }
+
+  /// 从 Markdown 文本中解析导入排盘记录
+  /// 返回解析出的记录列表和导出者信息
+  static ({List<DivinationRecord> records, String? exporterName}) importFromMarkdown(String markdown) {
+    final records = <DivinationRecord>[];
+    String? exporterName;
+
+    // 提取导出者
+    final exporterMatch = RegExp(r'\*\*导出者\*\*[：:]\s*(.+)').firstMatch(markdown);
+    if (exporterMatch != null) {
+      exporterName = exporterMatch.group(1)?.trim();
+    }
+
+    // 提取 JSON 元数据（支持单条和多条）
+    final dataMatches = RegExp(r'<!-- LIUYAO_DATA:\n([\s\S]*?)\nLIYAO_DATA_END -->').allMatches(markdown);
+    for (final match in dataMatches) {
+      try {
+        final jsonStr = match.group(1)?.trim();
+        if (jsonStr != null && jsonStr.isNotEmpty) {
+          final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
+          records.add(DivinationRecord.fromJson(jsonMap));
+        }
+      } catch (_) {
+        // 跳过无法解析的数据
+      }
+    }
+
+    return (records: records, exporterName: exporterName);
   }
 
   /// 获取导出文件名（单条记录）

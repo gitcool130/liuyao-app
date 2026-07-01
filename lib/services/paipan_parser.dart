@@ -12,6 +12,7 @@
 /// - 干支格式可能有多种写法
 
 import '../models/image_recognition_result.dart';
+import '../algorithms/constants.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 /// 排盘解析器
@@ -25,11 +26,16 @@ class PaipanParser {
     '甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'
   ];
 
+  // 六十甲子列表（用于干支验证和兜底匹配）
+  static final List<String> _ganZhi60List = ganzhi60.toList();
+
   // OCR常见误识别映射
   static const Map<String, String> _ocrCorrectionMap = {
     '已': '巳',  // 巳常被识别为已
     '间': '问',  // 问常被识别为间
     '后': '姤',  // 姤常被识别为后
+    '末': '未',  // 未常被识别为末
+    '末位': '未位',
   };
 
   // 64卦名称（按八宫排列）
@@ -171,36 +177,121 @@ class PaipanParser {
         }
       }
 
-      // ========== 2. 识别卦名 ==========
+      // 格式4: 使用六十甲子列表 + 带后缀(年/月/日/时)的精确匹配
+      // 策略：先找"XX年""XX月""XX日""XX时"这种明确带后缀的干支组合，
+      // 再与六十甲子表比对验证，确保四柱分配准确
+      if (dayGanZhi == null || yearGanZhi == null || monthGanZhi == null || hourGanZhi == null) {
+        // 匹配带后缀的干支：XX年、XX月、XX日、XX时（含误识别校正）
+        final gzWithSuffix = RegExp(
+          r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥已末])\s*([年y月r日d时h])'
+        );
 
-      // 直接搜索64卦名称（不依赖关键词）
-      // 记录找到的所有卦名及其位置
-      final foundGuas = <Map<String, dynamic>>[];
-      for (final entry in _guaIndexMap.entries) {
-        final guaName = entry.key;
-        // 在校正后的文本中搜索
-        if (correctedText.contains(guaName)) {
-          final index = correctedText.indexOf(guaName);
-          foundGuas.add({
-            'name': guaName,
-            'index': index,
-            'value': entry.value,
-          });
+        for (final m in gzWithSuffix.allMatches(correctedText)) {
+          String candidate = m.group(1)!;
+          final suffix = m.group(2)!;
+
+          // 校正常见误识别
+          candidate = candidate
+              .replaceAll('已', '巳')
+              .replaceAll('末', '未');
+
+          // 验证是否在六十甲子表中
+          if (!_ganZhi60List.contains(candidate)) continue;
+
+          switch (suffix) {
+            case '年':
+              yearGanZhi ??= candidate;
+            case '月':
+              monthGanZhi ??= candidate;
+            case '日':
+              dayGanZhi ??= candidate;
+            case '时':
+              hourGanZhi ??= candidate;
+          }
         }
       }
 
-      // 按位置排序，第一个出现的通常是本卦，后面的是变卦
-      foundGuas.sort((a, b) => (a['index'] as int).compareTo(b['index'] as int));
+      // ========== 2. 识别卦名（支持模糊匹配）==========
 
-      // 去除简称（如果全称已存在）
-      final fullGuaNames = foundGuas.where((g) => (g['name'] as String).length >= 3).toList();
-      if (fullGuaNames.isNotEmpty) {
-        benGuaName = fullGuaNames.first['name'] as String;
-        if (fullGuaNames.length > 1) {
-          bianGuaName = fullGuaNames[1]['name'] as String;
+      /// 计算两个字符串的逐字符匹配率（按位置比较）
+      double _charMatchRate(String a, String b) {
+        if (a.isEmpty || b.isEmpty) return 0;
+        final len = a.length < b.length ? a.length : b.length;
+        int matched = 0;
+        for (int i = 0; i < len; i++) {
+          if (a[i] == b[i]) matched++;
         }
-      } else if (foundGuas.isNotEmpty) {
-        // 如果只有简称
+        return matched / (a.length > b.length ? a.length : b.length);
+      }
+
+      /// 在文本中搜索卦名（全称>别名>简写>模糊）
+      List<Map<String, dynamic>> _findGuaNames(String text) {
+        final fullResults = <Map<String, dynamic>>[];    // 3字以上精确
+        final aliasResults = <Map<String, dynamic>>[];   // 别名精确
+        final shortResults = <Map<String, dynamic>>[];   // 1-2字精确（仅兜底）
+        final fuzzyResults = <Map<String, dynamic>>[];   // 模糊匹配
+        final seen = <String>{};
+
+        for (final entry in _guaIndexMap.entries) {
+          final guaName = entry.key;
+          if (seen.contains(guaName)) continue;
+          seen.add(guaName);
+          if (guaName.length < 1) continue;
+
+          int idx = text.indexOf(guaName);
+          if (idx != -1) {
+            if (guaName.length >= 3) {
+              fullResults.add({'name': guaName, 'index': idx, 'score': 1.0});
+            } else {
+              // 1-2字简写暂存，仅当无全称匹配时才使用
+              shortResults.add({'name': guaName, 'index': idx, 'score': 1.0});
+            }
+            continue;
+          }
+
+          // 3字以上卦名的模糊匹配（仅在无精确匹配时兜底）
+          if (guaName.length >= 3) {
+            for (int i = 0; i <= text.length - guaName.length; i++) {
+              final segment = text.substring(i, i + guaName.length);
+              final rate = _charMatchRate(segment, guaName);
+              if (rate >= 0.66 && rate < 1.0) {
+                fuzzyResults.add({'name': guaName, 'index': i, 'score': rate});
+                break;
+              }
+            }
+          }
+        }
+
+        // 优先使用全称精确匹配
+        if (fullResults.isNotEmpty) {
+          fullResults.sort((a, b) => (a['index'] as int).compareTo(b['index'] as int));
+          return fullResults;
+        }
+
+        // 有模糊匹配时优先返回模糊结果（比简写更可靠）
+        if (fuzzyResults.isNotEmpty) {
+          fuzzyResults.sort((a, b) {
+            final posCmp = (a['index'] as int).compareTo(b['index'] as int);
+            if (posCmp != 0) return posCmp;
+            return (b['score'] as double).compareTo(a['score'] as double);
+          });
+          return fuzzyResults;
+        }
+
+        // 最后才用简写兜底
+        if (shortResults.isNotEmpty) {
+          shortResults.sort((a, b) => (a['index'] as int).compareTo(b['index'] as int));
+          return shortResults;
+        }
+
+        return [];
+      }
+
+      // 执行卦名匹配（精确优先，模糊兜底）
+      final foundGuas = _findGuaNames(correctedText);
+
+      // 取前2个不同位置的卦名作为本卦和变卦
+      if (foundGuas.isNotEmpty) {
         benGuaName = foundGuas.first['name'] as String;
         if (foundGuas.length > 1) {
           bianGuaName = foundGuas[1]['name'] as String;
@@ -336,14 +427,49 @@ class PaipanParser {
         }
       }
 
-      // 占问内容 - 改进识别（支持多行内容）
-      // 策略：从"占问"关键字开始，到"公历"关键字结束，中间所有内容都作为问念
+      // 占问内容识别
+      // 策略：从"占问/问念/背景"关键字开始，到"公历/卦名/干支"结束
 
-      // 方法1: 使用"公历"作为结束标记
-      final gregKeywordIndex = correctedText.indexOf('公历');
+      /// 提取关键字后面的内容，直到遇到结束标记
+      String? extractQuestionAfter(String text, int kwStart, String kw) {
+        final startIdx = kwStart + kw.length;
+        String after = text.substring(startIdx);
 
-      // 查找占问关键字
-      final qKeywords = ['占问', '占间', '问事', '求测', '测事'];
+        // 去除开头的冒号、空格、换行
+        int contentStart = 0;
+        while (contentStart < after.length &&
+            (after[contentStart] == ':' ||
+                after[contentStart] == '：' ||
+                after[contentStart] == ' ' ||
+                after[contentStart] == '\t' ||
+                after[contentStart] == '\n')) {
+          contentStart++;
+        }
+        if (contentStart >= after.length) return null;
+        after = after.substring(contentStart);
+
+        // 查找结束位置
+        final endMarkers = ['公历', '年柱', '月柱', '日柱', '时柱',
+            '干支', '本卦', '变卦', '起卦时间', '旬空'];
+        int endPos = after.length;
+        for (final marker in endMarkers) {
+          final idx = after.indexOf(marker);
+          if (idx != -1 && idx < endPos) endPos = idx;
+        }
+
+        // 干支年份作为结束标记
+        final gzPattern = RegExp(r'[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥已末]年');
+        final gzMatch = gzPattern.firstMatch(after);
+        if (gzMatch != null && gzMatch.start < endPos) endPos = gzMatch.start;
+
+        return after.substring(0, endPos).trim();
+      }
+
+      // 查找所有关键字位置
+      final qKeywords = ['占问', '问念', '占间', '问事', '求测', '测事', '问题'];
+      final bgKeywords = ['背景', '背景情况'];
+
+      // 1. 优先提取问念/占问内容
       int? qKeywordStart;
       String? qKeywordFound;
       for (final kw in qKeywords) {
@@ -355,65 +481,49 @@ class PaipanParser {
         }
       }
 
-      if (qKeywordStart != null && gregKeywordIndex != -1 && qKeywordStart < gregKeywordIndex) {
-        // 从占问关键字到公历关键字之间的内容
-        final endIndex = gregKeywordIndex;
-        final startIndex = qKeywordStart + (qKeywordFound?.length ?? 2);
-        // 查找冒号或空格后的位置
-        final afterKeyword = correctedText.substring(startIndex, endIndex);
-        // 去除开头的冒号和空格
-        final contentStart = afterKeyword.indexOfFirstNonDelimiter();
-        if (contentStart != -1) {
-          question = correctedText.substring(startIndex + contentStart, endIndex).trim();
-        } else {
-          question = afterKeyword.trim();
+      if (qKeywordStart != null) {
+        question = extractQuestionAfter(correctedText, qKeywordStart, qKeywordFound!);
+      }
+
+      // 2. 提取背景内容，拼接到问念后面
+      String? backgroundContent;
+      for (final kw in bgKeywords) {
+        final idx = correctedText.indexOf(kw);
+        if (idx != -1) {
+          // 跳过作为问念结束标记的情况（背景在问念附近时不重复提取）
+          if (qKeywordFound != null && (idx - (qKeywordStart ?? 0)).abs() < 5) continue;
+          final bg = extractQuestionAfter(correctedText, idx, kw);
+          if (bg != null && bg.isNotEmpty) {
+            backgroundContent = bg;
+            break;
+          }
         }
       }
 
-      // 方法2: 如果没有公历标记，使用换行作为结束（但允许多行）
-      if (question == null && qKeywordStart != null) {
-        // 查找占问后的内容，直到遇到明显的分隔标记（如干支、卦名等）
-        final startIndex = qKeywordStart + (qKeywordFound?.length ?? 2);
-        String afterKeyword = correctedText.substring(startIndex);
-
-        // 去除开头的冒号和空格
-        int contentStart = 0;
-        while (contentStart < afterKeyword.length &&
-               (afterKeyword[contentStart] == ':' ||
-                afterKeyword[contentStart] == '：' ||
-                afterKeyword[contentStart] == ' ' ||
-                afterKeyword[contentStart] == '\t')) {
-          contentStart++;
-        }
-
-        if (contentStart < afterKeyword.length) {
-          afterKeyword = afterKeyword.substring(contentStart);
-
-          // 查找结束位置（遇到干支、卦名等关键字）
-          final endMarkers = ['年柱', '月柱', '日柱', '时柱', '干支', '本卦', '变卦'];
-          int endPos = afterKeyword.length;
-          for (final marker in endMarkers) {
-            final idx = afterKeyword.indexOf(marker);
-            if (idx != -1 && idx < endPos) {
-              endPos = idx;
-            }
-          }
-
-          // 也查找干支格式作为结束标记
-          final gzPattern = RegExp(r'[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥已]年');
-          final gzMatch = gzPattern.firstMatch(afterKeyword);
-          if (gzMatch != null && gzMatch.start < endPos) {
-            endPos = gzMatch.start;
-          }
-
-          question = afterKeyword.substring(0, endPos).trim();
+      // 3. 如有背景内容，拼接到问念后面
+      if (backgroundContent != null && backgroundContent.isNotEmpty) {
+        if (question != null && question.isNotEmpty) {
+          question = '$question（背景：$backgroundContent）';
+        } else {
+          question = backgroundContent;
         }
       }
 
       // 方法3: 原有的简单正则匹配作为后备
-      if (question == null) {
-        final qPatternFallback = RegExp(r'(占问|占间|问事|求测|测事)[:：]\s*(.{2,100}?)[\n\r]');
+      if (question == null || question.isEmpty) {
+        final qPatternFallback = RegExp(
+            r'(占问|问念|占间|问事|求测|测事|问题)[:：]\s*(.{2,100}?)[\n\r]');
         match = qPatternFallback.firstMatch(correctedText);
+        if (match != null) {
+          question = match.group(2)?.trim();
+        }
+      }
+
+      // 最后兜底：查找任何包含"问"字的关键词
+      if (question == null || question.isEmpty) {
+        final qPatternAny = RegExp(
+            r'[^问](问)[:：\s]*(\S[^]{2,60}?)[\n\r]');
+        match = qPatternAny.firstMatch(correctedText);
         if (match != null) {
           question = match.group(2)?.trim();
         }

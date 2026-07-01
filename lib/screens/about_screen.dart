@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../version.dart';
+import 'privacy_screen.dart';
 
 /// 应用说明页面
 class AboutScreen extends StatelessWidget {
@@ -28,7 +30,7 @@ class AboutScreen extends StatelessWidget {
                         Icon(Icons.book, size: 24, color: const Color(0xFF8B4513)),
                         const SizedBox(width: 8),
                         const Text(
-                          '六爻排盘',
+                          '六爻助手',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -316,6 +318,20 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
 
+            // 隐私政策
+            Center(
+              child: TextButton(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen())),
+                child: const Text('隐私政策', style: TextStyle(fontSize: 13)),
+              ),
+            ),
+            // 版本号
+            Center(
+              child: Text(
+                'v$appVersion ($appBuildNumber)',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              ),
+            ),
             const SizedBox(height: 24),
           ],
         ),

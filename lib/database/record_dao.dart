@@ -90,12 +90,17 @@ class RecordDao {
     return maps.map((json) => DivinationRecord.fromJson(json)).toList();
   }
 
-  /// 搜索记录（按问题或起卦人姓名）
+  /// 搜索记录（按问题、起卦人姓名）
   Future<List<DivinationRecord>> search(String keyword) async {
+    if (keyword.isEmpty) {
+      return await getAll();
+    }
+
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
       DatabaseHelper.tableRecords,
-      where: 'question LIKE ? OR querent_name LIKE ?',
+      // 使用驼峰列名（与数据库表定义一致）
+      where: 'question LIKE ? OR querentName LIKE ?',
       whereArgs: ['%$keyword%', '%$keyword%'],
       orderBy: 'createdAt DESC',
     );
