@@ -279,7 +279,66 @@ class _ResultScreenState extends State<ResultScreen> {
       }
     }
 
-    // 3. 变爻对动爻的关系
+    // 3. 动爻对动爻的关系
+    for (int i = 0; i < dongYaos.length; i++) {
+      final dongA = dongYaos[i];
+      if (dongA.ganZhi == null || dongA.ganZhi!.isEmpty) continue;
+      final zhiA = dongA.ganZhi!;
+
+      for (int j = i + 1; j < dongYaos.length; j++) {
+        final dongB = dongYaos[j];
+        if (dongB.ganZhi == null || dongB.ganZhi!.isEmpty) continue;
+        final zhiB = dongB.ganZhi!;
+
+        if (_showChong && DiZhiRelations.isChong(zhiA, zhiB)) {
+          relations.add(YaoRelation(
+            fromPosition: dongA.position,
+            toPosition: dongB.position,
+            fromType: 'yao',
+            toType: 'yao',
+            relationType: DiZhiRelations.relationChong,
+            description: '动冲动',
+            fromDiZhi: zhiA,
+            toDiZhi: zhiB,
+          ));
+        } else if (_showHe && DiZhiRelations.isHe(zhiA, zhiB)) {
+          relations.add(YaoRelation(
+            fromPosition: dongA.position,
+            toPosition: dongB.position,
+            fromType: 'yao',
+            toType: 'yao',
+            relationType: DiZhiRelations.relationHe,
+            description: '动合动',
+            fromDiZhi: zhiA,
+            toDiZhi: zhiB,
+          ));
+        } else if (_showSheng && DiZhiRelations.isSheng(zhiA, zhiB)) {
+          relations.add(YaoRelation(
+            fromPosition: dongA.position,
+            toPosition: dongB.position,
+            fromType: 'yao',
+            toType: 'yao',
+            relationType: DiZhiRelations.relationSheng,
+            description: '动生动',
+            fromDiZhi: zhiA,
+            toDiZhi: zhiB,
+          ));
+        } else if (_showKe && DiZhiRelations.isKe(zhiA, zhiB)) {
+          relations.add(YaoRelation(
+            fromPosition: dongA.position,
+            toPosition: dongB.position,
+            fromType: 'yao',
+            toType: 'yao',
+            relationType: DiZhiRelations.relationKe,
+            description: '动克动',
+            fromDiZhi: zhiA,
+            toDiZhi: zhiB,
+          ));
+        }
+      }
+    }
+
+    // 4. 变爻对动爻的关系
     if (record.bianGua != null) {
       for (final dongYao in dongYaos) {
         if (dongYao.bianGanZhi != null && dongYao.bianGanZhi!.isNotEmpty) {
