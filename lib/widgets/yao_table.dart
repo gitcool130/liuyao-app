@@ -399,7 +399,7 @@ class _YaoSymbolCell extends StatelessWidget {
                 )
               else if (isDong && symbol.contains('✕'))
                 TextSpan(
-                  text: '▅▅　▅▅',
+                  text: '▅▅  ▅▅',
                   style: TextStyle(fontSize: fontSize, color: dongColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
                 )
               else

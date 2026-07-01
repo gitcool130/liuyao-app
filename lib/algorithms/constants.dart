@@ -600,8 +600,8 @@ const Map<YaoType, String> yaoTypeNames = {
 const Map<YaoType, String> yaoTypeSymbols = {
   YaoType.laoYang: '▅▅▅▅▅○',
   YaoType.shaoYang: '▅▅▅▅▅',
-  YaoType.shaoYin: '▅▅　▅▅',
-  YaoType.laoYin: '▅▅　▅▅✕',
+  YaoType.shaoYin: '▅▅  ▅▅',
+  YaoType.laoYin: '▅▅  ▅▅✕',
 };
 
 // ============================================================================

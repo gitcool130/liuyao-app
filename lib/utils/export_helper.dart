@@ -147,7 +147,7 @@ class ExportHelper {
       // 变卦（仅动爻有，显示爻象+六亲+地支五行）
       if (hasDongYao) {
         if (yao.isDong) {
-          String bianSymbol = yao.isYang ? '▅▅　▅▅' : '▅▅▅▅▅';
+          String bianSymbol = yao.isYang ? '▅▅▅▅▅' : '▅▅  ▅▅';
           String bianInfo = '';
           if (yao.bianLiuQin != null && yao.bianLiuQin!.isNotEmpty) {
             bianInfo = yao.bianLiuQin!;
