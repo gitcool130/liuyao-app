@@ -416,7 +416,6 @@ class _YaoSymbolCell extends StatelessWidget {
           ),
           maxLines: 1,
         ),
-      ),
     );
   }
 }
