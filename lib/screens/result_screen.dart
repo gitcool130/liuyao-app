@@ -526,7 +526,7 @@ class _ResultScreenState extends State<ResultScreen> {
               _buildSanHeDisplay(record),
             ],
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
 
             // 解卦输入区
             _buildInterpretationCard(record),
@@ -775,34 +775,32 @@ class _ResultScreenState extends State<ResultScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.edit_note, size: 16),
-                const SizedBox(width: 4),
+                const Icon(Icons.edit_note, size: 18),
+                const SizedBox(width: 6),
                 const Text('解卦笔记',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 if (_isEditing)
                   ElevatedButton(
                     onPressed: () => _finishEditing(record),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       minimumSize: Size.zero,
-                      visualDensity: VisualDensity.compact,
                     ),
-                    child: const Text('完成', style: TextStyle(fontSize: 11)),
+                    child: const Text('完成', style: TextStyle(fontSize: 12)),
                   )
                 else
                   TextButton(
                     onPressed: () => setState(() => _isEditing = true),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       minimumSize: Size.zero,
-                      visualDensity: VisualDensity.compact,
                     ),
-                    child: const Text('编辑', style: TextStyle(fontSize: 11)),
+                    child: const Text('编辑', style: TextStyle(fontSize: 12)),
                   ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
 
             if (_isEditing)
               TextField(
