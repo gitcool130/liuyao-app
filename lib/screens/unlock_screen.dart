@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/feature_lock_service.dart';
 import '../providers/settings_provider.dart';
+import 'course_notes_screen.dart';
 
 class UnlockScreen extends StatefulWidget {
   const UnlockScreen({super.key});
@@ -178,6 +179,24 @@ class _UnlockScreenState extends State<UnlockScreen> {
               ),
             ),
           ),
+
+          const SizedBox(height: 16),
+
+          // 易青岚高级课笔记（已解锁时显示进入按钮）
+          if (_unlockedFeatures.contains('F006'))
+            Card(
+              color: Colors.brown.shade50,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                leading: const Icon(Icons.menu_book, color: Color(0xFF5D4037), size: 28),
+                title: const Text('易青岚高级课笔记', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                subtitle: const Text('40课时六爻进阶课程', style: TextStyle(fontSize: 12)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CourseNotesScreen()));
+                },
+              ),
+            ),
 
           const SizedBox(height: 16),
 

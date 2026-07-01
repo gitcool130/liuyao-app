@@ -43,6 +43,7 @@ const List<LockedFeature> lockedFeatures = [
   LockedFeature(code: 'F003', name: 'OCR识别', description: '拍照识别排盘图片'),
   LockedFeature(code: 'F004', name: '批量导出', description: '选中多条记录导出为Markdown'),
   LockedFeature(code: 'F005', name: '神煞详解', description: '神煞含义详解与吉凶分析'),
+  LockedFeature(code: 'F006', name: '易青岚高级课笔记', description: '45课时六爻进阶课程笔记'),
 ];
 
 /// 功能锁服务

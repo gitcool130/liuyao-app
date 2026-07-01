@@ -83,6 +83,7 @@ flutter:
     - assets/images/back02.png
     # 节气查表数据
     - assets/jieqi_table.json      # 1900-2100年基础数据
+    - assets/course_notes.json      # 易青岚高级课笔记
     - assets/jieqi_2026_2030.json   # 2026-2030年高精度数据
 
   # An image asset can refer to one or more resolution-specific "variants", see
