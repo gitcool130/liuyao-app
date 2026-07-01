@@ -9,6 +9,7 @@ import '../screens/about_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/unlock_screen.dart';
 import '../screens/course_notes_screen.dart';
+import '../screens/shensha_detail_screen.dart';
 import '../screens/image_import_screen.dart';
 import '../screens/import_screen.dart';
 import '../services/feature_lock_service.dart';
@@ -435,12 +436,9 @@ class _HomeScreenState extends State<HomeScreen> {
           desc: '神煞含义详解与吉凶分析',
           unlocked: _unlockedFeatures.contains('F005'),
           color: Colors.purple,
-          onTap: _unlockedFeatures.contains('F005') ? () {
-            // TODO: 导航到神煞详解
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('神煞详解功能即将上线')),
-            );
-          } : null,
+          onTap: _unlockedFeatures.contains('F005')
+              ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShenshaDetailScreen()))
+              : null,
         ),
 
         const SizedBox(height: 8),
