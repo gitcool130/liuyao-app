@@ -85,7 +85,12 @@ class FeatureLockService {
     final now = DateTime.now();
     for (int year = now.year; year <= now.year + 5; year++) {
       for (int month = 1; month <= 12; month++) {
-        for (int day = 1; day <= 28; day++) {
+        // 计算该月天数
+        final daysInMonth = (month == 2)
+            ? (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0) ? 29 : 28)
+            : [1, 3, 5, 7, 8, 10, 12].contains(month) ? 31 : 30;
+
+        for (int day = 1; day <= daysInMonth; day++) {
           final dateStr = '${year}${month.toString().padLeft(2, '0')}${day.toString().padLeft(2, '0')}';
           final expected = generateCode(
             deviceId: deviceId,
