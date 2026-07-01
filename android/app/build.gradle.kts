@@ -54,13 +54,6 @@ android {
         }
     }
 
-    applicationVariants.configureEach {
-        outputs.configureEach {
-            if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
-                outputFileName = "liuyao-assistant.apk"
-            }
-        }
-    }
 }
 
 kotlin {
