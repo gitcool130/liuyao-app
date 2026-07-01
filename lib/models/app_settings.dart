@@ -40,13 +40,11 @@ const Map<String, String> allShenshaItems = {
   '红鸾': 'hongLuan',
   '天喜': 'tianXi',
   '劫煞': 'jieSha',
+  '灾煞': 'zaiSha',
+  '亡神': 'wangShen',
+  '孤辰': 'guChen',
+  '寡宿': 'guaSu',
 };
-
-/// 按shouxing_calendar.dart定义顺序排列的神煞显示名称
-const List<String> shenshaDisplayNames = [
-  '天乙贵人', '驿马', '华盖', '咸池', '禄神', '天医',
-  '文昌', '将星', '羊刃', '红鸾', '天喜', '劫煞',
-];
 
 class AppSettings {
   // ========== 爻颜色 ==========

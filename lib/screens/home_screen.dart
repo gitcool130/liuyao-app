@@ -118,16 +118,16 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('六爻助手'),
         actions: [
-          // 颜色设置
+          // 设置
           IconButton(
-            icon: const Icon(Icons.palette_outlined),
+            icon: const Icon(Icons.settings_outlined),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const SettingsScreen()),
               );
             },
-            tooltip: '颜色设置',
+            tooltip: '设置',
           ),
           // 说明菜单
           IconButton(

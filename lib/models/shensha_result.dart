@@ -1,7 +1,7 @@
 /// 神煞结果模型
 library;
 
-/// 神煞结果类
+/// 神煞结果类（共16项）
 class ShenshaResult {
   /// 天乙贵人
   final String tianYi;
@@ -30,6 +30,16 @@ class ShenshaResult {
   /// 劫煞
   final String jieSha;
 
+  // === 新增 (2026-07-01) ===
+  /// 灾煞
+  final String zaiSha;
+  /// 亡神
+  final String wangShen;
+  /// 孤辰
+  final String guChen;
+  /// 寡宿
+  final String guaSu;
+
   ShenshaResult({
     this.tianYi = '',
     this.yiMa = '',
@@ -43,6 +53,10 @@ class ShenshaResult {
     this.hongLuan = '',
     this.tianXi = '',
     this.jieSha = '',
+    this.zaiSha = '',
+    this.wangShen = '',
+    this.guChen = '',
+    this.guaSu = '',
   });
 
   /// 转换为 JSON Map
@@ -60,6 +74,10 @@ class ShenshaResult {
       'hongLuan': hongLuan,
       'tianXi': tianXi,
       'jieSha': jieSha,
+      'zaiSha': zaiSha,
+      'wangShen': wangShen,
+      'guChen': guChen,
+      'guaSu': guaSu,
     };
   }
 
@@ -78,6 +96,10 @@ class ShenshaResult {
       hongLuan: json['hongLuan'] as String? ?? '',
       tianXi: json['tianXi'] as String? ?? '',
       jieSha: json['jieSha'] as String? ?? '',
+      zaiSha: json['zaiSha'] as String? ?? '',
+      wangShen: json['wangShen'] as String? ?? '',
+      guChen: json['guChen'] as String? ?? '',
+      guaSu: json['guaSu'] as String? ?? '',
     );
   }
 
@@ -86,7 +108,8 @@ class ShenshaResult {
     return tianYi.isEmpty && yiMa.isEmpty && huaGai.isEmpty &&
         xianChi.isEmpty && tianYiShen.isEmpty && luShen.isEmpty &&
         wenChang.isEmpty && jiangXing.isEmpty && yangRen.isEmpty &&
-        hongLuan.isEmpty && tianXi.isEmpty && jieSha.isEmpty;
+        hongLuan.isEmpty && tianXi.isEmpty && jieSha.isEmpty &&
+        zaiSha.isEmpty && wangShen.isEmpty && guChen.isEmpty && guaSu.isEmpty;
   }
 
   @override
@@ -104,6 +127,10 @@ class ShenshaResult {
     if (hongLuan.isNotEmpty) parts.add('红鸾:$hongLuan');
     if (tianXi.isNotEmpty) parts.add('天喜:$tianXi');
     if (jieSha.isNotEmpty) parts.add('劫煞:$jieSha');
+    if (zaiSha.isNotEmpty) parts.add('灾煞:$zaiSha');
+    if (wangShen.isNotEmpty) parts.add('亡神:$wangShen');
+    if (guChen.isNotEmpty) parts.add('孤辰:$guChen');
+    if (guaSu.isNotEmpty) parts.add('寡宿:$guaSu');
     return 'ShenshaResult(${parts.join(', ')})';
   }
 }

@@ -7,7 +7,7 @@ import 'constants.dart';
 
 /// 神煞计算器
 class ShenShaCalculator {
-  /// 计算神煞（12项）
+  /// 计算神煞（16项）
   static ShenshaResult calculate({
     required String dayGan,
     required String dayZhi,
@@ -27,6 +27,10 @@ class ShenShaCalculator {
       hongLuan: getHongLuan(dayZhi),
       tianXi: getTianXi(dayZhi),
       jieSha: getJieSha(dayZhi),
+      zaiSha: getZaiSha(yearZhi),
+      wangShen: getWangShen(dayZhi),
+      guChen: getGuChen(yearZhi),
+      guaSu: getGuaSu(yearZhi),
     );
   }
 
@@ -86,6 +90,20 @@ class ShenShaCalculator {
     };
     return explanations[shenShaName] ?? '';
   }
+
+  // === 新增神煞 (2026-07-01) ===
+
+  /// 灾煞（按年支，三合局对冲位）
+  static String getZaiSha(String yearZhi) => zaiSha[yearZhi] ?? '';
+
+  /// 亡神（按日支，三合局寅申巳亥）
+  static String getWangShen(String dayZhi) => wangShen[dayZhi] ?? '';
+
+  /// 孤辰（按年支）
+  static String getGuChen(String yearZhi) => guChen[yearZhi] ?? '';
+
+  /// 寡宿（按年支）
+  static String getGuaSu(String yearZhi) => guaSu[yearZhi] ?? '';
 
   /// 获取三合局
   static String getSanHeJu(String zhi) {

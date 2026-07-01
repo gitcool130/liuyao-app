@@ -16,6 +16,7 @@ class ShenshaCard extends StatelessWidget {
   static const _shenshaDisplayNames = [
     '天乙贵人', '驿马', '咸池', '禄神', '华盖', '天医',
     '文昌', '将星', '羊刃', '红鸾', '天喜', '劫煞',
+    '灾煞', '亡神', '孤辰', '寡宿',
   ];
 
   /// 神煞字段取值映射
@@ -33,6 +34,10 @@ class ShenshaCard extends StatelessWidget {
       case '红鸾': return s.hongLuan;
       case '天喜': return s.tianXi;
       case '劫煞': return s.jieSha;
+      case '灾煞': return s.zaiSha;
+      case '亡神': return s.wangShen;
+      case '孤辰': return s.guChen;
+      case '寡宿': return s.guaSu;
       default: return '';
     }
   }
