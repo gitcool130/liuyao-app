@@ -624,8 +624,9 @@ class _ResultScreenState extends State<ResultScreen> {
 
       // ---- 类型3: 本卦至少两个不同地支 + 日月参与三合 ----
       // 本卦中至少有两个不同的地支属于该组（去重后计数）
+      // 中神（子午卯酉）必须在**本卦爻**上，不能由日月充当
       final benGroupValues = benZhi.entries.where((e) => group.contains(e.value)).map((e) => e.value).toSet();
-      if (benGroupValues.length >= 2) {
+      if (benGroupValues.length >= 2 && benGroupValues.contains(zhongShen)) {
         final allZhi = {...benZhi.values, monthZhi, dayZhi}.where((z) => group.contains(z)).toList();
         if (allZhi.length == 3) {
           // 标记本卦中属于该三合组的地支
@@ -636,7 +637,7 @@ class _ResultScreenState extends State<ResultScreen> {
           final sources = <String>[];
           if (group.contains(monthZhi)) sources.add('月$monthZhi');
           if (group.contains(dayZhi)) sources.add('日$dayZhi');
-          descs.add('本卦${benGroupMatches.join("、")}爻 ${sources.join(" ")} → $heName');
+          descs.add('本卦${benGroupValues.join("、")}爻 ${sources.join(" ")} → $heName');
         }
       }
     }
