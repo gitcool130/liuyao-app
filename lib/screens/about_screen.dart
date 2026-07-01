@@ -218,7 +218,7 @@ class AboutScreen extends StatelessWidget {
                     _buildFeatureItem('导出Markdown', '选中单条或多条记录，导出为Markdown格式文件，可通过系统分享发送到微信、飞书、邮件等', Colors.green),
                     const SizedBox(height: 12),
                     const Text(
-                      '解卦笔记：在排盘结果页底部可编辑解卦内容，点击"完成"自动保存。从历史记录进入时同样支持编辑和保存。',
+                      '解卦笔记：在排盘结果页底部可编辑解卦内容，点击"完成"自动保存。收到他人分享的排盘时自动弹窗提示，确认后自动保存当前编辑内容再跳转。',
                       style: TextStyle(fontSize: 13, color: Colors.black87),
                     ),
                   ],
@@ -303,7 +303,7 @@ class AboutScreen extends StatelessWidget {
 
                     _buildFeatureItem(
                       '三合局分析',
-                      '自动识别卦中三合局（申子辰、寅午戌、巳酉丑、亥卯未），标注成局爻位和日月参与信息。中神（子午卯酉）必须在卦爻上。',
+                      '自动识别卦中三合局（申子辰、寅午戌、巳酉丑、亥卯未），标注成局爻位和日月参与信息。中神（子午卯酉）必须在卦爻上，三爻缺一不可。',
                       Colors.teal,
                     ),
                   ],
@@ -336,12 +336,11 @@ class AboutScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 12),
-                    _buildFeatureItem('颜色', '自定义静爻/动爻颜色、连线颜色、五行彩色显示开关', Colors.orange),
+                    _buildFeatureItem('颜色', '自定义静爻(默认黑)/动爻(默认红)颜色、连线颜色、五行彩色显示开关、干支彩色显示开关', Colors.orange),
                     const SizedBox(height: 6),
                     _buildFeatureItem(
                       '字体',
-                      '调整爻象字体、神煞字体、信息栏字体大小。'
-                      '干支四柱保持15pt不变，其他信息字体大小可调，字体过大时自动换行。',
+                      '调整爻象字体(默认10)、干支字体(默认15)、旬空字体(默认13)、神煞字体(默认12)、信息栏字体(默认12)大小。字体过大时自动换行。',
                       Colors.blue,
                     ),
                     const SizedBox(height: 6),
