@@ -185,7 +185,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         const SizedBox(height: 4),
         const Text('控制卦爻符号（───○▅▅▅▅▅等）的显示大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 8),
-        _fontSizeItem('爻象字体', _temp.yaoFontSize, (v) => _temp.yaoFontSize = v, 10, 18),
+        _fontSizeItem('爻象字体', _temp.yaoFontSize, (v) => _temp.yaoFontSize = v, 8, 18),
 
         const Divider(height: 32),
 
@@ -193,7 +193,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         const SizedBox(height: 4),
         const Text('控制神煞栏显示字体大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 8),
-        _fontSizeItem('神煞字体', _temp.shenshaFontSize, (v) => _temp.shenshaFontSize = v, 10, 20),
+        _fontSizeItem('神煞字体', _temp.shenshaFontSize, (v) => _temp.shenshaFontSize = v, 8, 20),
 
         const Divider(height: 32),
 
@@ -201,7 +201,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         const SizedBox(height: 4),
         const Text('控制四柱干支（丙午年等）的显示大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 8),
-        _fontSizeItem('干支字体', _temp.ganZhiFontSize, (v) => _temp.ganZhiFontSize = v, 12, 22),
+        _fontSizeItem('干支字体', _temp.ganZhiFontSize, (v) => _temp.ganZhiFontSize = v, 8, 22),
 
         const Divider(height: 32),
 
@@ -209,7 +209,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         const SizedBox(height: 4),
         const Text('控制四柱下方旬空文字的显示大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 8),
-        _fontSizeItem('旬空字体', _temp.xunKongFontSize, (v) => _temp.xunKongFontSize = v, 10, 18),
+        _fontSizeItem('旬空字体', _temp.xunKongFontSize, (v) => _temp.xunKongFontSize = v, 8, 18),
 
         const Divider(height: 32),
 
@@ -217,7 +217,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         const SizedBox(height: 4),
         const Text('控制起卦时间、农历、问念等文字大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 8),
-        _fontSizeItem('信息字体', _temp.infoFontSize, (v) => _temp.infoFontSize = v, 10, 18),
+        _fontSizeItem('信息字体', _temp.infoFontSize, (v) => _temp.infoFontSize = v, 8, 18),
 
         const Divider(height: 32),
 
