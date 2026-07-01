@@ -444,6 +444,9 @@ class _ResultScreenState extends State<ResultScreen> {
         ? _calculateRelations(record)
         : <YaoRelation>[];
 
+    final settings = context.read<SettingsProvider>().settings;
+    final infoFontSize = settings.infoFontSize;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(isHistoryView ? '${record.benGua.guaName} ${record.benGua.guaSymbol}' : '排盘结果'),
@@ -485,7 +488,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   '起卦人：${record.querentName}${record.querentGender.isNotEmpty ? " (${record.querentGender})" : ""}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: infoFontSize, color: Colors.grey.shade700),
                 ),
               ),
 
