@@ -15,6 +15,7 @@ import 'dart:io';
 import '../algorithms/lunar_calendar.dart';
 import '../algorithms/shouxing_calendar.dart';
 import '../algorithms/shensha_calculator.dart';
+import '../algorithms/xunkong_calculator.dart';
 import '../models/shensha_result.dart';
 import '../providers/settings_provider.dart';
 import '../utils/auto_save.dart';
@@ -478,33 +479,13 @@ class _ResultScreenState extends State<ResultScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 顶部信息栏：起卦人、起卦时间、问念
-            if (record.querentName.isNotEmpty || record.question.isNotEmpty)
+            // 起卦人
+            if (record.querentName.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Card(
-                  margin: EdgeInsets.zero,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (record.querentName.isNotEmpty)
-                          Text(
-                            '起卦人：${record.querentName}${record.querentGender.isNotEmpty ? " (${record.querentGender})" : ""}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                          ),
-                        if (record.question.isNotEmpty)
-                          Padding(
-                            padding: EdgeInsets.only(top: record.querentName.isNotEmpty ? 2 : 0),
-                            child: Text(
-                              '问：${record.question}',
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+                child: Text(
+                  '起卦人：${record.querentName}${record.querentGender.isNotEmpty ? " (${record.querentGender})" : ""}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                 ),
               ),
 
@@ -521,6 +502,7 @@ class _ResultScreenState extends State<ResultScreen> {
               child: YaoTable(
                 yaoLines: record.yaoLines,
                 gongWuXing: record.benGua.guaWuXing ?? '',
+                gongName: record.benGua.gongName,
                 benGuaName: record.benGua.guaName,
                 bianGuaName: record.bianGua?.guaName,
                 benGuaLabel: getGuaChongHeLabel(record.benGua.gua64Index),
@@ -1059,74 +1041,74 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  /// 构建干支/旬空/卦宫卡片（位于神煞和YaoTable之间）
+  /// 构建干支/旬空卡片（位于神煞和YaoTable之间）
   Widget _buildGanZhiCard(DivinationRecord record) {
     final settings = context.read<SettingsProvider>().settings;
     final colored = settings.showColoredGanZhi;
-    final infoFontSize = settings.infoFontSize;
     final yearGz = record.yearGz;
     final monthGz = record.monthGz;
     final dayGz = record.dayGz;
     final hourGz = record.hourGz;
 
-    // 年空/月空/日空/时空
-    final xunKong = record.xunKong;
-    String nianKong = '', yueKong = '', riKong = '', shiKong = '';
-    if (xunKong.length >= 2) {
-      nianKong = xunKong.substring(0, 2);
-    }
-    if (xunKong.length >= 2) {
-      // 月空日空时空复用旬空（按四柱分别显示）
-      yueKong = xunKong.length >= 2 ? xunKong.substring(0, 2) : xunKong;
-      riKong = xunKong.length >= 4 ? xunKong.substring(2) : (xunKong.length >= 2 ? xunKong.substring(0, 2) : xunKong);
-      shiKong = xunKong.length >= 4 ? xunKong.substring(2) : (xunKong.length >= 2 ? xunKong.substring(0, 2) : xunKong);
+    // 分别计算四柱各自的旬空
+    final nianKong = XunKongCalculator.getXunKongStr(yearGz);
+    final yueKong = XunKongCalculator.getXunKongStr(monthGz);
+    final riKong = XunKongCalculator.getXunKongStr(dayGz); // 传统旬空
+    final shiKong = XunKongCalculator.getXunKongStr(hourGz);
+
+    // 四列：年柱 | 月柱 | 日柱 | 时柱
+    Widget _pillar(String gz, String kong, bool useColor) {
+      return Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            useColor
+                ? _buildColoredPillar(gz)
+                : Text(gz, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF8B4513))),
+            const SizedBox(height: 2),
+            Text(kong.isEmpty ? '' : kong,
+                style: TextStyle(fontSize: 11, color: kong.isEmpty ? Colors.transparent : Colors.grey.shade500)),
+          ],
+        ),
+      );
     }
 
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            // 第一行：干支四柱
-            colored ? _buildColoredGanZhi(record, infoFontSize) : Text(
-              '$yearGz年 $monthGz月 $dayGz日 $hourGz时',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF8B4513)),
-            ),
-            const SizedBox(height: 2),
-            // 第二行：年空 月空 日空 时空 和 卦宫
-            Row(
-              children: [
-                _xunKongCell('年空', nianKong),
-                const SizedBox(width: 8),
-                _xunKongCell('月空', yueKong),
-                const SizedBox(width: 8),
-                _xunKongCell('日空', riKong),
-                const SizedBox(width: 8),
-                _xunKongCell('时空', shiKong),
-                const Spacer(),
-                // 卦宫显示：卦宫名：本卦名
-                Text(
-                  '${record.benGua.gongName}：${record.benGua.guaName}',
-                  style: TextStyle(fontSize: infoFontSize, fontWeight: FontWeight.bold, color: const Color(0xFF5D4037)),
-                ),
-              ],
-            ),
+            _pillar('$yearGz年', nianKong, colored),
+            const SizedBox(width: 4),
+            _pillar('$monthGz月', yueKong, colored),
+            const SizedBox(width: 4),
+            _pillar('$dayGz日', riKong, colored),
+            const SizedBox(width: 4),
+            _pillar('$hourGz时', shiKong, colored),
           ],
         ),
       ),
     );
   }
 
-  Widget _xunKongCell(String label, String value) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('$label：', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        Text(value.isEmpty ? '无' : value,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: value.isEmpty ? Colors.grey : const Color(0xFF8B4513))),
-      ],
-    );
+  /// 单柱彩色显示
+  Widget _buildColoredPillar(String gz) {
+    final spans = <TextSpan>[];
+    for (int i = 0; i < gz.length; i++) {
+      final char = gz[i];
+      Color? color;
+      if (_tianGanWuXing.containsKey(char)) {
+        color = AppSettings.wuXingColors[_tianGanWuXing[char]];
+      } else if (diZhiWuXing.containsKey(char)) {
+        color = AppSettings.wuXingColors[diZhiWuXing[char]];
+      }
+      spans.add(TextSpan(
+        text: char,
+        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
+            color: color ?? const Color(0xFF8B4513)),
+      ));
+    }
+    return RichText(text: TextSpan(children: spans));
   }
 }

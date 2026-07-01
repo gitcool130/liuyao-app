@@ -15,6 +15,7 @@ import '../providers/settings_provider.dart';
 class YaoTable extends StatelessWidget {
   final List<YaoLine> yaoLines;
   final String gongWuXing; // 卦宫五行，用于计算伏神六亲
+  final String? gongName;  // 卦宫名（如"乾宫"）
   final String benGuaName; // 本卦名称
   final String? bianGuaName; // 变卦名称（有动爻时）
   final String? benGuaLabel; // 本卦标签（六冲/六合）
@@ -32,6 +33,7 @@ class YaoTable extends StatelessWidget {
     required this.yaoLines,
     required this.gongWuXing,
     required this.benGuaName,
+    this.gongName,
     this.bianGuaName,
     this.benGuaLabel,
     this.bianGuaLabel,
@@ -97,7 +99,7 @@ class YaoTable extends StatelessWidget {
           SizedBox(
             width: benGuaHeaderWidth,
             child: Text(
-              benGuaLabel != null && benGuaLabel!.isNotEmpty ? '$benGuaName($benGuaLabel)' : benGuaName,
+              '${gongName != null ? '$gongName：' : ''}${benGuaLabel != null && benGuaLabel!.isNotEmpty ? '$benGuaName($benGuaLabel)' : benGuaName}',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
