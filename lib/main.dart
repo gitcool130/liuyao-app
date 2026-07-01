@@ -41,11 +41,11 @@ void main() async {
               barrierDismissible: true,
               builder: (ctx) => AlertDialog(
                 title: const Text('收到排盘分享'),
-                content: const Text('是否打开导入页面？当前排盘或编辑状态将保持，导入后可继续操作。'),
+                content: const Text('当前页面未保存的编辑内容（如解卦笔记）将会丢失。\n\n是否打开导入页面？'),
                 actions: [
                   TextButton(
                     onPressed: () { Navigator.pop(ctx); _sharingLock = false; },
-                    child: const Text('忽略'),
+                    child: const Text('取消'),
                   ),
                   ElevatedButton(
                     onPressed: () {
@@ -55,7 +55,7 @@ void main() async {
                       );
                       _sharingLock = false;
                     },
-                    child: const Text('打开'),
+                    child: const Text('直接打开'),
                   ),
                 ],
               ),
