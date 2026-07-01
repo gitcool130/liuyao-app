@@ -805,9 +805,12 @@ class _ResultScreenState extends State<ResultScreen> {
     final historyProvider = Provider.of<HistoryProvider>(context, listen: false);
 
     try {
-      // 历史记录模式：直接更新解卦内容
-      if (record.id != null) {
-        await historyProvider.updateInterpretation(record.id!, _interpretationController.text);
+      // 优先使用 _savedRecordId 再取 record.id（新排盘首次保存后 record.id 仍为 null）
+      final existingId = record.id ?? _savedRecordId;
+
+      if (existingId != null) {
+        // 已有记录：更新解卦内容
+        await historyProvider.updateInterpretation(existingId, _interpretationController.text);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('已更新解卦内容')),
@@ -815,7 +818,7 @@ class _ResultScreenState extends State<ResultScreen> {
         return;
       }
 
-      // 新排盘模式：保存到历史记录
+      // 新排盘：保存到历史记录
       final recordWithInterpretation = record.copyWith(
         interpretation: _interpretationController.text,
       );
