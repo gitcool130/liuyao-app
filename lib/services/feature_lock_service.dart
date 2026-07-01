@@ -80,7 +80,7 @@ class FeatureLockService {
     // 尝试解析验证码中的过期日期
     // 遍历可能的过期日期格式（YYYYMMDD）
     final now = DateTime.now();
-    for (int year = now.year; year <= now.year + 5; year++) {
+    for (int year = now.year; year <= 2099; year++) {
       for (int month = 1; month <= 12; month++) {
         // 计算该月天数
         final daysInMonth = (month == 2)
