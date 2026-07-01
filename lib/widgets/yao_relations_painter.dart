@@ -16,6 +16,9 @@ class YaoRelationsOverlay extends StatefulWidget {
   /// 神煞卡片组件
   final Widget shenshaCard;
 
+  /// 干支旬空卡片组件（新增，位于神煞和YaoTable之间）
+  final Widget ganZhiCard;
+
   /// 子组件（YaoTable）
   final Widget child;
 
@@ -36,6 +39,7 @@ class YaoRelationsOverlay extends StatefulWidget {
     required this.relations,
     required this.infoCard,
     required this.shenshaCard,
+    required this.ganZhiCard,
     required this.child,
     required this.monthZhi,
     required this.dayZhi,
@@ -50,6 +54,7 @@ class YaoRelationsOverlay extends StatefulWidget {
 class _YaoRelationsOverlayState extends State<YaoRelationsOverlay> {
   final GlobalKey _infoCardKey = GlobalKey();
   final GlobalKey _shenshaCardKey = GlobalKey();
+  final GlobalKey _ganZhiCardKey = GlobalKey();
   final GlobalKey _yaoTableKey = GlobalKey();
 
   @override
@@ -57,29 +62,21 @@ class _YaoRelationsOverlayState extends State<YaoRelationsOverlay> {
     // 获取各组件实际高度
     final infoCardH = _getHeight(_infoCardKey);
     final shenshaCardH = _getHeight(_shenshaCardKey);
+    final ganZhiCardH = _getHeight(_ganZhiCardKey);
     final yaoTableH = _getHeight(_yaoTableKey);
 
     // 计算YaoTable内部的实际行高
-    // YaoTable结构：Card(4) + Header + 6行
-    // 实际行高 = (总高度 - cardPadding上下 - header高度) / 6
     double actualRowHeight = 0;
     double actualHeaderHeight = 0;
     if (yaoTableH > 0) {
-      // Card padding上下共8px，header约20-25px
-      // 简化计算：假设cardPadding=8, header约占总高度的15%
-      // 更精确：rowHeight = (yaoTableH - 8 - estimatedHeader) / 6
-      // 但我们需要更可靠的方法
-
-      // 方案：使用测量值和估算结合
-      // rowHeight = (yaoTableH - cardPadding(8) - estimatedHeader) / 6
-      final cardPadding = 8.0; //上下各4px
-      actualHeaderHeight = yaoTableH * 0.12; // header约占总高度12%
+      final cardPadding = 8.0;
+      actualHeaderHeight = yaoTableH * 0.12;
       actualRowHeight = (yaoTableH - cardPadding - actualHeaderHeight) / 6;
     }
 
     return Stack(
       children: [
-        // 底层：InfoCard + ShenshaCard + YaoTable垂直排列
+        // 底层：InfoCard + ShenshaCard + GanZhiCard + YaoTable垂直排列
         Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -88,11 +85,13 @@ class _YaoRelationsOverlayState extends State<YaoRelationsOverlay> {
             const SizedBox(height: 4),
             Container(key: _shenshaCardKey, child: widget.shenshaCard),
             const SizedBox(height: 4),
+            Container(key: _ganZhiCardKey, child: widget.ganZhiCard),
+            const SizedBox(height: 4),
             Container(key: _yaoTableKey, child: widget.child),
           ],
         ),
 
-        // 上层：关系连线（覆盖整个区域）
+        // 上层：关系连线
         if (widget.relations.isNotEmpty)
           Positioned.fill(
             child: CustomPaint(
@@ -104,6 +103,7 @@ class _YaoRelationsOverlayState extends State<YaoRelationsOverlay> {
                 showQuantification: widget.showQuantification,
                 infoCardHeight: infoCardH,
                 shenshaCardHeight: shenshaCardH,
+                ganZhiCardHeight: ganZhiCardH,
                 yaoTableHeight: yaoTableH,
                 actualHeaderHeight: actualHeaderHeight,
                 actualRowHeight: actualRowHeight,
@@ -134,6 +134,7 @@ class _RelationsPainter extends CustomPainter {
   final bool showQuantification;
   final double infoCardHeight;
   final double shenshaCardHeight;
+  final double ganZhiCardHeight;
   final double yaoTableHeight;
   final double actualHeaderHeight;
   final double actualRowHeight;
@@ -146,6 +147,7 @@ class _RelationsPainter extends CustomPainter {
     this.showQuantification = false,
     this.infoCardHeight = 0,
     this.shenshaCardHeight = 0,
+    this.ganZhiCardHeight = 0,
     this.yaoTableHeight = 0,
     this.actualHeaderHeight = 0,
     this.actualRowHeight = 0,
@@ -159,44 +161,43 @@ class _RelationsPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (relations.isEmpty || size.isEmpty) return;
 
-    // 使用实际测量的高度（如果测量失败则使用默认估算值）
+    // 使用实际测量的高度
     final measuredInfoCardH = infoCardHeight > 0 ? infoCardHeight : 90.0;
     final measuredShenshaCardH = shenshaCardHeight > 0 ? shenshaCardHeight : 48.0;
+    final measuredGanZhiCardH = ganZhiCardHeight > 0 ? ganZhiCardHeight : 100.0;
 
-    // YaoTable在Stack中的起始Y位置
-    final yaoTableStartY = measuredInfoCardH + 4 + measuredShenshaCardH + 4;
+    // YaoTable在Stack中的起始Y位置（含ganZhiCard高度）
+    final yaoTableStartY = measuredInfoCardH + 4 + measuredShenshaCardH + 4 + measuredGanZhiCardH + 4;
 
-    // YaoTable内部布局（优先使用测量值）
-    // Card padding: all(4) = 上下共8px，顶部4px
+    // YaoTable内部布局
     final headerH = actualHeaderHeight > 0 ? actualHeaderHeight : 22.0;
     final rowH = actualRowHeight > 0 ? actualRowHeight : 21.0;
 
-    // "支"列的x位置：神(28)+伏(36)+六亲(36) = 100，加上量化列偏移
+    // "支"列的x位置：神(28)+伏(36)+六亲(36) = 100
     final zhiColumnX = 100.0 + (showQuantification ? 28 : 18);
 
-    // 变卦列的x位置：前面的列宽度之和
-    // 神(28)+伏(36)+六亲(36)+支(36或50)+世应(24)+本卦(80) = 244或256
+    // 变卦列的x位置
     final benGuaWidth = 80.0;
     final bianGuaStartX = zhiColumnX + (showQuantification ? 50 : 36) + 24 + benGuaWidth + 4;
-    // 变卦地支在变卦列中的位置：爻象符号后约60px（130宽度的后半部分是地支五行）
     final bianGuaZhiX = bianGuaStartX + 60;
 
     // 爻位置（从上到下，position 6→1 对应 index 0→5）
-    // Y = yaoTableStartY + cardPaddingTop(4) + headerH + rowH的中心
     final yaoPositions = List.generate(6, (i) {
       return Offset(zhiColumnX, yaoTableStartY + 4 + headerH + rowH * (i + 0.5));
     });
 
-    // 变爻位置（从变卦列的地支位置出发）
+    // 变爻位置
     final bianYaoPositions = List.generate(6, (i) {
       return Offset(bianGuaZhiX, yaoTableStartY + 4 + headerH + rowH * (i + 0.5));
     });
 
-    // 月建位置：从InfoCard中的月建文字位置出发
-    final monthPos = Offset(65, measuredInfoCardH * 0.45);
+    // 月建位置：从ShenshaCard末尾的干支卡片中的月建文字出发
+    // 干支卡片位于 infoCard + 4 + shenshaCard + 4 之后
+    final ganZhiAreaTop = measuredInfoCardH + 4 + measuredShenshaCardH + 4;
+    final monthPos = Offset(65, ganZhiAreaTop + measuredGanZhiCardH * 0.3);
 
-    // 日辰位置：日建在第四个干支
-    final dayPos = Offset(145, measuredInfoCardH * 0.45);
+    // 日辰位置
+    final dayPos = Offset(145, ganZhiAreaTop + measuredGanZhiCardH * 0.3);
 
     // 绘制关系
     for (int i = 0; i < relations.length; i++) {
@@ -279,8 +280,8 @@ class _RelationsPainter extends CustomPainter {
     final midX = (start.dx + end.dx) / 2;
     final midY = (start.dy + end.dy) / 2;
 
-    // 判断起点类型（是否从信息栏出发）
-    final isFromInfoBar = start.dy < 120; // 信息栏在Y<120区域
+    // 判断起点类型（是否从干支信息栏出发）
+    final isFromInfoBar = start.dy < 200; // 干支信息栏在Y<200区域
 
     if (isFromInfoBar) {
       // 从信息栏出发的连线，弧度向外侧弯曲

@@ -478,17 +478,35 @@ class _ResultScreenState extends State<ResultScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 起卦人信息
-            if (record.querentName.isNotEmpty)
+            // 顶部信息栏：起卦人、起卦时间、问念
+            if (record.querentName.isNotEmpty || record.question.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  '起卦人：${record.querentName}${record.querentGender.isNotEmpty ? " (${record.querentGender})" : ""}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (record.querentName.isNotEmpty)
+                          Text(
+                            '起卦人：${record.querentName}${record.querentGender.isNotEmpty ? " (${record.querentGender})" : ""}',
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                          ),
+                        if (record.question.isNotEmpty)
+                          Padding(
+                            padding: EdgeInsets.only(top: record.querentName.isNotEmpty ? 2 : 0),
+                            child: Text(
+                              '问：${record.question}',
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-
-            const SizedBox(height: 4),
 
             // 六爻详情表格（带关系连线）
             YaoRelationsOverlay(
@@ -499,6 +517,7 @@ class _ResultScreenState extends State<ResultScreen> {
               settings: context.read<SettingsProvider>().settings,
               infoCard: _buildInfoCard(record),
               shenshaCard: ShenshaCard(shensha: _ensureFullShensha(record)),
+              ganZhiCard: _buildGanZhiCard(record),
               child: YaoTable(
                 yaoLines: record.yaoLines,
                 gongWuXing: record.benGua.guaWuXing ?? '',
@@ -985,29 +1004,82 @@ class _ResultScreenState extends State<ResultScreen> {
     return RichText(text: TextSpan(children: spans));
   }
 
-  /// 构建信息卡片（紧凑版）
+  /// 构建信息卡片（仅含时间、农历、节气）
   Widget _buildInfoCard(DivinationRecord record) {
-    // 农历显示：干支年 + 农历月日
     final lunarDateStr = LunarCalendar.getLunarDateString(record.divTime);
-    // 时辰显示：干支时柱
     final hourGz = record.hourGz;
     final settings = context.read<SettingsProvider>().settings;
     final infoFontSize = settings.infoFontSize;
 
-    // 检查是否是节气日
     String jieQiStr = '';
     try {
       final jieQiList = ShouXingCalendar.getJieQiList(record.divTime.year);
       for (final jieQi in jieQiList) {
-        // 检查起卦时间是否在节气交割时间前后2小时内
         final diff = record.divTime.difference(jieQi.time).abs();
         if (diff.inHours < 2) {
           jieQiStr = '${jieQi.name} ${jieQi.time.hour.toString().padLeft(2, '0')}:${jieQi.time.minute.toString().padLeft(2, '0')}';
           break;
         }
       }
-    } catch (e) {
-      // 节气检查失败，忽略
+    } catch (_) {}
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Flexible(
+                  child: Text(record.formattedDivTime, style: TextStyle(fontSize: infoFontSize), overflow: TextOverflow.ellipsis),
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text('${record.yearGz}年 $lunarDateStr $hourGz时',
+                      style: TextStyle(fontSize: infoFontSize, color: Colors.grey.shade700),
+                      textAlign: TextAlign.right, overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+            if (jieQiStr.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text('节气：$jieQiStr', style: TextStyle(fontSize: infoFontSize, color: Colors.orange.shade700)),
+              ),
+            if (record.question.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text('问：${record.question}', style: TextStyle(fontSize: infoFontSize, fontStyle: FontStyle.italic)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建干支/旬空/卦宫卡片（位于神煞和YaoTable之间）
+  Widget _buildGanZhiCard(DivinationRecord record) {
+    final settings = context.read<SettingsProvider>().settings;
+    final colored = settings.showColoredGanZhi;
+    final infoFontSize = settings.infoFontSize;
+    final yearGz = record.yearGz;
+    final monthGz = record.monthGz;
+    final dayGz = record.dayGz;
+    final hourGz = record.hourGz;
+
+    // 年空/月空/日空/时空
+    final xunKong = record.xunKong;
+    String nianKong = '', yueKong = '', riKong = '', shiKong = '';
+    if (xunKong.length >= 2) {
+      nianKong = xunKong.substring(0, 2);
+    }
+    if (xunKong.length >= 2) {
+      // 月空日空时空复用旬空（按四柱分别显示）
+      yueKong = xunKong.length >= 2 ? xunKong.substring(0, 2) : xunKong;
+      riKong = xunKong.length >= 4 ? xunKong.substring(2) : (xunKong.length >= 2 ? xunKong.substring(0, 2) : xunKong);
+      shiKong = xunKong.length >= 4 ? xunKong.substring(2) : (xunKong.length >= 2 ? xunKong.substring(0, 2) : xunKong);
     }
 
     return Card(
@@ -1017,89 +1089,44 @@ class _ResultScreenState extends State<ResultScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 第一行：起卦时间 + 农历（干支年 + 月日）
+            // 第一行：干支四柱
+            colored ? _buildColoredGanZhi(record, infoFontSize) : Text(
+              '$yearGz年 $monthGz月 $dayGz日 $hourGz时',
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF8B4513)),
+            ),
+            const SizedBox(height: 2),
+            // 第二行：年空 月空 日空 时空 和 卦宫
             Row(
               children: [
-                Flexible(
-                  child: Text(
-                    record.formattedDivTime,
-                    style: TextStyle(fontSize: infoFontSize),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    '${record.yearGz}年 $lunarDateStr $hourGz时',
-                    style: TextStyle(fontSize: infoFontSize, color: Colors.grey.shade700),
-                    textAlign: TextAlign.right,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                _xunKongCell('年空', nianKong),
+                const SizedBox(width: 8),
+                _xunKongCell('月空', yueKong),
+                const SizedBox(width: 8),
+                _xunKongCell('日空', riKong),
+                const SizedBox(width: 8),
+                _xunKongCell('时空', shiKong),
+                const Spacer(),
+                // 卦宫显示：卦宫名：本卦名
+                Text(
+                  '${record.benGua.gongName}：${record.benGua.guaName}',
+                  style: TextStyle(fontSize: infoFontSize, fontWeight: FontWeight.bold, color: const Color(0xFF5D4037)),
                 ),
               ],
             ),
-            const SizedBox(height: 3),
-
-            // 第二行：干支四柱（15pt不变，可根据设置彩色显示）
-            settings.showColoredGanZhi
-                ? _buildColoredGanZhi(record, infoFontSize)
-                : Text(
-                    '${record.yearGz}年 ${record.monthGz}月 ${record.dayGz}日 ${record.hourGz}时',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF8B4513),
-                    ),
-                  ),
-
-            // 节气提示（如有）
-            if (jieQiStr.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  '节气：$jieQiStr',
-                  style: TextStyle(fontSize: infoFontSize, color: Colors.orange.shade700),
-                ),
-              ),
-
-            const SizedBox(height: 3),
-
-            // 旬空（默认加粗）+ 卦宫
-            RichText(
-              text: TextSpan(
-                children: [
-                  const TextSpan(
-                    text: '旬空：',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-                  ),
-                  TextSpan(
-                    text: record.xunKong,
-                    style: TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFF8B4513)),
-                  ),
-                  TextSpan(
-                    text: '  卦宫：${record.benGua.gongName}(${record.benGua.guaWuXing})',
-                    style: const TextStyle(color: Colors.black87),
-                  ),
-                ],
-                style: TextStyle(fontSize: infoFontSize),
-              ),
-            ),
-
-            // 问题（如有）
-            if (record.question.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '问：${record.question}',
-                  style: TextStyle(
-                    fontSize: infoFontSize,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _xunKongCell(String label, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$label：', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(value.isEmpty ? '无' : value,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: value.isEmpty ? Colors.grey : const Color(0xFF8B4513))),
+      ],
     );
   }
 }
