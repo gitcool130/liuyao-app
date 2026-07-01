@@ -399,7 +399,7 @@ class _YaoSymbolCell extends StatelessWidget {
                 )
               else if (isDong && symbol.contains('✕'))
                 TextSpan(
-                  text: '▅▅  ▅▅',
+                  text: '▅▅ ▅▅',
                   style: TextStyle(fontSize: fontSize, color: dongColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
                 )
               else
@@ -443,11 +443,11 @@ class _BianYaoCell extends StatelessWidget {
     if (yao.bianYaoType == YaoType.laoYang) {
       symbol = '▅▅▅▅▅○';
     } else if (yao.bianYaoType == YaoType.laoYin) {
-      symbol = '▅▅　▅▅✕';
+      symbol = '▅▅ ▅▅✕';
     } else if (yao.bianYaoType == YaoType.shaoYang) {
       symbol = '▅▅▅▅▅';
     } else if (yao.bianYaoType == YaoType.shaoYin) {
-      symbol = '▅▅　▅▅';
+      symbol = '▅▅ ▅▅';
     } else {
       symbol = '';
     }
