@@ -40,27 +40,21 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkShareIntent();
   }
 
-  static const _channel = MethodChannel('com.bobo.liuyao_app/share');
-
+  /// 冷启动时检查是否有分享intent（热启动由main.dart的setMethodCallHandler处理）
   void _checkShareIntent() async {
     try {
+      const _channel = MethodChannel('com.bobo.liuyao_app/share');
       final content = await _channel.invokeMethod<String>('getSharedFileContent');
-      if (content != null && content.isNotEmpty) {
+      if (content != null && content.isNotEmpty && !_shareHandled) {
+        _shareHandled = true;
         if (mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && !_shareHandled) {
-              _shareHandled = true;
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ImportScreen(sharedContent: content)),
-              );
-            }
-          });
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ImportScreen(sharedContent: content)),
+          );
         }
       }
-    } catch (_) {
-      // 没有分享Intent，忽略
-    }
+    } catch (_) {}
   }
 
   void _updateGanZhi() {

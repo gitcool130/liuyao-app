@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import 'providers/divination_provider.dart';
 import 'providers/history_provider.dart';
 import 'providers/settings_provider.dart';
@@ -9,6 +10,11 @@ import 'screens/manual_input_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/shake_screen.dart';
 import 'screens/history_screen.dart';
+import 'screens/import_screen.dart';
+
+/// 全局导航键，用于从任意位置导航（如分享intent处理）
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+bool _sharingLock = false;
 
 void main() async {
   // 确保Flutter绑定初始化（用于加载assets）
@@ -18,8 +24,38 @@ void main() async {
   // 预加载设置（确保进入设置页时已有值）
   final settingsProvider = SettingsProvider();
   await settingsProvider.load();
+
+  // 监听分享intent（app已在运行时收到新分享也处理）
+  const shareChannel = MethodChannel('com.bobo.liuyao_app/share');
+  shareChannel.setMethodCallHandler((call) async {
+    if (call.method == 'getSharedFileContent' && !_sharingLock) {
+      _sharingLock = true;
+      final content = call.arguments as String?;
+      if (content != null && content.isNotEmpty) {
+        // 清除导航栈回到首页，再打开导入页
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => route.isFirst,
+        );
+        // 延迟一帧确保首页已加载
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(builder: (_) => ImportScreen(sharedContent: content)),
+          );
+          _sharingLock = false;
+        });
+      } else {
+        _sharingLock = false;
+      }
+    }
+  });
+
   runApp(LiuYaoApp(settingsProvider: settingsProvider));
 }
+
+class LiuYaoApp extends StatelessWidget {
+  final SettingsProvider settingsProvider;
+  const LiuYaoApp({super.key, required this.settingsProvider});
 
 class LiuYaoApp extends StatelessWidget {
   final SettingsProvider settingsProvider;
@@ -34,6 +70,7 @@ class LiuYaoApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: settingsProvider),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: '六爻助手',
         debugShowCheckedModeBanner: false,
         // 根据屏幕宽度自动计算字体比例
