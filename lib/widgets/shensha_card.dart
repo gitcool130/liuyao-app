@@ -5,21 +5,26 @@ import '../models/app_settings.dart';
 import '../providers/settings_provider.dart';
 
 /// 神煞信息卡片组件
-/// 自适应wrap布局，根据字体大小自动决定每行显示数量
-/// 支持用户勾选显示特定神煞
-class ShenshaCard extends StatelessWidget {
+/// 自适应wrap布局，点击可收缩/展开
+class ShenshaCard extends StatefulWidget {
   final ShenshaResult shensha;
 
   const ShenshaCard({super.key, required this.shensha});
 
-  /// 神煞名称列表（供过滤使用）
+  @override
+  State<ShenshaCard> createState() => _ShenshaCardState();
+}
+
+class _ShenshaCardState extends State<ShenshaCard> {
+  bool _expanded = true;
+
+  /// 神煞名称列表
   static const _shenshaDisplayNames = [
     '天乙贵人', '驿马', '咸池', '禄神', '华盖', '天医',
     '文昌', '将星', '羊刃', '红鸾', '天喜', '劫煞',
     '灾煞', '亡神', '孤辰', '寡宿',
   ];
 
-  /// 神煞字段取值映射
   static String _getShenshaValue(ShenshaResult s, String displayName) {
     switch (displayName) {
       case '天乙贵人': return s.tianYi;
@@ -42,31 +47,17 @@ class ShenshaCard extends StatelessWidget {
     }
   }
 
-  /// field名 → 显示名
   static const _fieldToName = {
-    'tianYi': '天乙贵人',
-    'yiMa': '驿马',
-    'xianChi': '咸池',
-    'luShen': '禄神',
-    'huaGai': '华盖',
-    'tianYiShen': '天医',
-    'wenChang': '文昌',
-    'jiangXing': '将星',
-    'yangRen': '羊刃',
-    'hongLuan': '红鸾',
-    'tianXi': '天喜',
-    'jieSha': '劫煞',
-    'zaiSha': '灾煞',
-    'wangShen': '亡神',
-    'guChen': '孤辰',
-    'guaSu': '寡宿',
+    'tianYi': '天乙贵人', 'yiMa': '驿马', 'xianChi': '咸池',
+    'luShen': '禄神', 'huaGai': '华盖', 'tianYiShen': '天医',
+    'wenChang': '文昌', 'jiangXing': '将星', 'yangRen': '羊刃',
+    'hongLuan': '红鸾', 'tianXi': '天喜', 'jieSha': '劫煞',
+    'zaiSha': '灾煞', 'wangShen': '亡神', 'guChen': '孤辰', 'guaSu': '寡宿',
   };
 
   @override
   Widget build(BuildContext context) {
-    if (shensha.isEmpty()) {
-      return const SizedBox.shrink();
-    }
+    if (widget.shensha.isEmpty()) return const SizedBox.shrink();
 
     final settings = context.watch<SettingsProvider>().settings;
     final fontSize = settings.shenshaFontSize;
@@ -76,32 +67,52 @@ class ShenshaCard extends StatelessWidget {
     final items = <_ShenshaItem>[];
     for (final displayName in _shenshaDisplayNames) {
       final fieldName = _fieldToName.entries
-          .firstWhere((e) => e.value == displayName,
-              orElse: () => MapEntry('', ''))
-          .key;
+          .firstWhere((e) => e.value == displayName, orElse: () => MapEntry('', '')).key;
       if (fieldName.isEmpty) continue;
       if (!visibleFields.contains(fieldName)) continue;
-      final value = _getShenshaValue(shensha, displayName);
+      final value = _getShenshaValue(widget.shensha, displayName);
       if (value.isEmpty) continue;
       items.add(_ShenshaItem(displayName, value, fieldName));
     }
 
     if (items.isEmpty) return const SizedBox.shrink();
 
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 4,
-          children: items.map((item) {
-            return Text(
-              '${item.name}：${item.value}',
-              style: TextStyle(fontSize: fontSize),
-              overflow: TextOverflow.ellipsis,
-            );
-          }).toList(),
+    // 估算每行可显示的项数（根据字号）
+    final approxPerRow = fontSize > 15 ? 3 : (fontSize > 12 ? 4 : 5);
+    final hasMultiRows = items.length > approxPerRow;
+    final showing = _expanded || !hasMultiRows ? items : items.take(approxPerRow).toList();
+
+    return GestureDetector(
+      onTap: hasMultiRows ? () => setState(() => _expanded = !_expanded) : null,
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                children: showing.map((item) => Text(
+                  '${item.name}：${item.value}',
+                  style: TextStyle(fontSize: fontSize),
+                  overflow: TextOverflow.ellipsis,
+                )).toList(),
+              ),
+              if (hasMultiRows)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _expanded ? '▲ 收起' : '▼ 展开全部',
+                      style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
