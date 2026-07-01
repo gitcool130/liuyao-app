@@ -4,10 +4,14 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import '../algorithms/ganzhi_converter.dart';
 import '../providers/divination_provider.dart';
+import '../providers/settings_provider.dart';
 import '../screens/about_screen.dart';
 import '../screens/settings_screen.dart';
+import '../screens/unlock_screen.dart';
+import '../screens/course_notes_screen.dart';
 import '../screens/image_import_screen.dart';
 import '../screens/import_screen.dart';
+import '../services/feature_lock_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,11 +27,13 @@ class _HomeScreenState extends State<HomeScreen> {
   String _question = '';
   String _querentName = '';
   String _querentGender = '男';
+  List<String> _unlockedFeatures = [];
 
   @override
   void initState() {
     super.initState();
     _divTime = DateTime.now();
+    _loadUnlocked();
     _updateGanZhi();
     _checkShareIntent();
   }
@@ -84,6 +90,11 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
+  }
+
+  void _loadUnlocked() async {
+    final unlocked = await FeatureLockService.getUnlockedFeatures();
+    if (mounted) setState(() => _unlockedFeatures = unlocked);
   }
 
   void _navigateToManualInput() {
@@ -369,8 +380,128 @@ class _HomeScreenState extends State<HomeScreen> {
                 minimumSize: const Size(double.infinity, 48),
               ),
             ),
+
+            const SizedBox(height: 32),
+
+            // === 易青岚学员专享 ===
+            _buildVipSection(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildVipSection() {
+    final hasUnlocked = _unlockedFeatures.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.stars, size: 20, color: Colors.amber.shade700),
+            const SizedBox(width: 8),
+            const Text(
+              '易青岚学员专享',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5D4037),
+              ),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const UnlockScreen()),
+                );
+                _loadUnlocked();
+              },
+              icon: Icon(Icons.lock_open, size: 14, color: Colors.amber.shade700),
+              label: Text(
+                hasUnlocked ? '已解锁' : '去解锁',
+                style: TextStyle(fontSize: 12, color: hasUnlocked ? Colors.green : Colors.amber.shade700),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // 神煞详解
+        _buildVipItem(
+          icon: Icons.auto_awesome,
+          title: '神煞详解',
+          desc: '神煞含义详解与吉凶分析',
+          unlocked: _unlockedFeatures.contains('F005'),
+          color: Colors.purple,
+          onTap: _unlockedFeatures.contains('F005') ? () {
+            // TODO: 导航到神煞详解
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('神煞详解功能即将上线')),
+            );
+          } : null,
+        ),
+
+        const SizedBox(height: 8),
+
+        // 高级课笔记
+        _buildVipItem(
+          icon: Icons.menu_book,
+          title: '易青岚高级课笔记',
+          desc: '40课时六爻进阶课程全文',
+          unlocked: _unlockedFeatures.contains('F006'),
+          color: Colors.brown,
+          onTap: _unlockedFeatures.contains('F006')
+              ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CourseNotesScreen()))
+              : null,
+        ),
+
+        if (!hasUnlocked)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              '输入验证码解锁学员专享功能',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildVipItem({
+    required IconData icon,
+    required String title,
+    required String desc,
+    required bool unlocked,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    return Card(
+      color: unlocked ? null : Colors.grey.shade100,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        leading: Icon(
+          icon,
+          color: unlocked ? color : Colors.grey,
+          size: 28,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: unlocked ? Colors.black87 : Colors.grey,
+          ),
+        ),
+        subtitle: Text(
+          desc,
+          style: TextStyle(fontSize: 12, color: unlocked ? Colors.grey.shade600 : Colors.grey.shade400),
+        ),
+        trailing: unlocked
+            ? const Icon(Icons.chevron_right, color: Color(0xFF5D4037))
+            : const Icon(Icons.lock, color: Colors.grey, size: 20),
+        onTap: onTap,
       ),
     );
   }

@@ -38,10 +38,6 @@ class LockedFeature {
 
 /// 所有可锁定的功能列表
 const List<LockedFeature> lockedFeatures = [
-  LockedFeature(code: 'F001', name: '高级解卦', description: '动爻量化、冲合生克关系连线等完整解卦辅助工具'),
-  LockedFeature(code: 'F002', name: '三合局分析', description: '三合局自动识别与显示'),
-  LockedFeature(code: 'F003', name: 'OCR识别', description: '拍照识别排盘图片'),
-  LockedFeature(code: 'F004', name: '批量导出', description: '选中多条记录导出为Markdown'),
   LockedFeature(code: 'F005', name: '神煞详解', description: '神煞含义详解与吉凶分析'),
   LockedFeature(code: 'F006', name: '易青岚高级课笔记', description: '45课时六爻进阶课程笔记'),
 ];

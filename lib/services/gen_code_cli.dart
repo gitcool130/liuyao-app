@@ -13,10 +13,6 @@ import 'package:crypto/crypto.dart';
 const String _secretKey = 'LiuYaoApp_Unlock_Key_2026';
 
 const List<Map<String, String>> _features = [
-  {'code': 'F001', 'name': '高级解卦', 'desc': '动爻量化、冲合生克关系连线等完整解卦辅助工具'},
-  {'code': 'F002', 'name': '三合局分析', 'desc': '三合局自动识别与显示'},
-  {'code': 'F003', 'name': 'OCR识别', 'desc': '拍照识别排盘图片'},
-  {'code': 'F004', 'name': '批量导出', 'desc': '选中多条记录导出为Markdown'},
   {'code': 'F005', 'name': '神煞详解', 'desc': '神煞含义详解与吉凶分析'},
   {'code': 'F006', 'name': '易青岚高级课笔记', 'desc': '45课时六爻进阶课程笔记'},
 ];
