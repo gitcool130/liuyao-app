@@ -383,18 +383,38 @@ class _YaoSymbolCell extends StatelessWidget {
     final symbol = yao.yaoTypeSymbol;
     final isDong = yao.isDong;
 
+    // 动爻标记符号⬤✕用更大字号渲染
+    final double symbolFontSize = isDong ? fontSize * 1.6 : fontSize;
+
     return SizedBox(
       width: width,
       child: FittedBox(
         fit: BoxFit.scaleDown,
         alignment: Alignment.centerLeft,
-        child: Text(
-          symbol,
-          style: TextStyle(
-            fontSize: fontSize,
-            color: isDong ? dongColor : staticColor,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'monospace',
+        child: RichText(
+          text: TextSpan(
+            children: [
+              if (isDong && symbol.contains('⬤'))
+                TextSpan(
+                  text: '▅▅▅▅▅',
+                  style: TextStyle(fontSize: fontSize, color: dongColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                )
+              else if (isDong && symbol.contains('✕'))
+                TextSpan(
+                  text: '▅▅　▅▅',
+                  style: TextStyle(fontSize: fontSize, color: dongColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                )
+              else
+                TextSpan(
+                  text: symbol,
+                  style: TextStyle(fontSize: fontSize, color: isDong ? dongColor : staticColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                ),
+              if (isDong)
+                TextSpan(
+                  text: symbol.contains('⬤') ? '⬤' : '✕',
+                  style: TextStyle(fontSize: symbolFontSize, color: dongColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                ),
+            ],
           ),
           maxLines: 1,
         ),
@@ -424,9 +444,9 @@ class _BianYaoCell extends StatelessWidget {
     // 变卦爻象符号
     String symbol;
     if (yao.bianYaoType == YaoType.laoYang) {
-      symbol = '▅▅▅▅▅○';
+      symbol = '▅▅▅▅▅⬤';
     } else if (yao.bianYaoType == YaoType.laoYin) {
-      symbol = '▅▅　▅▅×';
+      symbol = '▅▅　▅▅✕';
     } else if (yao.bianYaoType == YaoType.shaoYang) {
       symbol = '▅▅▅▅▅';
     } else if (yao.bianYaoType == YaoType.shaoYin) {

@@ -598,10 +598,10 @@ const Map<YaoType, String> yaoTypeNames = {
 
 /// 爻类型符号
 const Map<YaoType, String> yaoTypeSymbols = {
-  YaoType.laoYang: '▅▅▅▅▅○',
+  YaoType.laoYang: '▅▅▅▅▅⬤',
   YaoType.shaoYang: '▅▅▅▅▅',
   YaoType.shaoYin: '▅▅　▅▅',
-  YaoType.laoYin: '▅▅　▅▅×',
+  YaoType.laoYin: '▅▅　▅▅✕',
 };
 
 // ============================================================================
