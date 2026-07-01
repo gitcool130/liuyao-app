@@ -70,6 +70,7 @@ class _CourseNotesScreenState extends State<CourseNotesScreen> {
                       index: index + 1,
                       title: lesson['title']!,
                       onTap: () => _openLesson(lesson['title']!, lesson['content']!),
+                      textScaleFactor: MediaQuery.textScaleFactorOf(context),
                     );
                   },
                 ),
@@ -90,23 +91,30 @@ class _LessonTile extends StatelessWidget {
   final int index;
   final String title;
   final VoidCallback onTap;
+  final double textScaleFactor;
 
-  const _LessonTile({required this.index, required this.title, required this.onTap});
+  const _LessonTile({
+    required this.index,
+    required this.title,
+    required this.onTap,
+    this.textScaleFactor = 1.0,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final ts = textScaleFactor;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       leading: CircleAvatar(
-        radius: 16,
+        radius: 16 * ts.clamp(0.8, 1.3),
         backgroundColor: const Color(0xFF5D4037),
-        child: Text('$index', style: const TextStyle(fontSize: 12, color: Colors.white)),
+        child: Text('$index', style: TextStyle(fontSize: (12 * ts.clamp(0.8, 1.3)), color: Colors.white)),
       ),
       title: Text(
         title.replaceAll('☯', ''),
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        style: TextStyle(fontSize: (14 * ts.clamp(0.8, 1.3)), fontWeight: FontWeight.w500),
       ),
-      trailing: const Icon(Icons.chevron_right, size: 18),
+      trailing: Icon(Icons.chevron_right, size: 18 * ts.clamp(0.8, 1.3)),
       onTap: onTap,
     );
   }
@@ -128,7 +136,10 @@ class _LessonDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: SelectableText(
           content,
-          style: const TextStyle(fontSize: 15, height: 1.8),
+          style: TextStyle(
+            fontSize: 15 * MediaQuery.textScaleFactorOf(context).clamp(0.8, 1.3),
+            height: 1.8,
+          ),
         ),
       ),
     );

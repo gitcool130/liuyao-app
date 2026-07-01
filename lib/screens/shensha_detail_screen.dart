@@ -3,6 +3,8 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/settings_provider.dart';
 
 /// 神煞详解内容
 class ShenshaDetail {
@@ -264,6 +266,7 @@ class _ShenshaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ts = MediaQuery.textScaleFactorOf(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
@@ -271,12 +274,12 @@ class _ShenshaCard extends StatelessWidget {
           children: [
             Icon(_getIcon(detail.name), size: 20, color: _getColor(detail.effect)),
             const SizedBox(width: 8),
-            Text(detail.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(detail.name, style: TextStyle(fontSize: 16 * ts.clamp(0.8, 1.3), fontWeight: FontWeight.bold)),
           ],
         ),
         subtitle: Text(
           detail.meaning.length > 30 ? '${detail.meaning.substring(0, 30)}...' : detail.meaning,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 12 * ts.clamp(0.8, 1.3), color: Colors.grey.shade600),
         ),
         children: [
           Padding(
@@ -284,10 +287,10 @@ class _ShenshaCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _section('含义', detail.meaning),
-                _section('用法', detail.usage),
-                _section('查法', detail.condition),
-                _section('效应', detail.effect, color: _getColor(detail.effect)),
+                _section(context, '含义', detail.meaning),
+                _section(context, '用法', detail.usage),
+                _section(context, '查法', detail.condition),
+                _section(context, '效应', detail.effect, color: _getColor(detail.effect)),
               ],
             ),
           ),
@@ -296,15 +299,16 @@ class _ShenshaCard extends StatelessWidget {
     );
   }
 
-  Widget _section(String label, String text, {Color? color}) {
+  Widget _section(BuildContext context, String label, String text, {Color? color}) {
+    final ts = MediaQuery.textScaleFactorOf(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.brown.shade700)),
+          Text(label, style: TextStyle(fontSize: 13 * ts.clamp(0.8, 1.3), fontWeight: FontWeight.bold, color: Colors.brown.shade700)),
           const SizedBox(height: 4),
-          Text(text, style: TextStyle(fontSize: 14, height: 1.6, color: color ?? Colors.black87)),
+          Text(text, style: TextStyle(fontSize: 14 * ts.clamp(0.8, 1.3), height: 1.6, color: color ?? Colors.black87)),
         ],
       ),
     );
