@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/services.dart';
 import '../algorithms/ganzhi_converter.dart';
 import '../providers/divination_provider.dart';
 import '../providers/settings_provider.dart';
@@ -12,7 +11,6 @@ import '../screens/course_notes_screen.dart';
 import '../screens/shensha_detail_screen.dart';
 import '../screens/browser_screen.dart';
 import '../screens/image_import_screen.dart';
-import '../screens/import_screen.dart';
 import '../services/feature_lock_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,7 +23,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late DateTime _divTime;
   late GanZhiResult _ganZhi;
-  bool _shareHandled = false;
   String _question = '';
   String _querentName = '';
   String _querentGender = '男';
@@ -37,24 +34,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _divTime = DateTime.now();
     _loadUnlocked();
     _updateGanZhi();
-    _checkShareIntent();
-  }
-
-  /// 冷启动时检查是否有分享intent（热启动由main.dart的setMethodCallHandler处理）
-  void _checkShareIntent() async {
-    try {
-      const _channel = MethodChannel('com.bobo.liuyao_app/share');
-      final content = await _channel.invokeMethod<String>('getSharedFileContent');
-      if (content != null && content.isNotEmpty && !_shareHandled) {
-        _shareHandled = true;
-        if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ImportScreen(sharedContent: content)),
-          );
-        }
-      }
-    } catch (_) {}
   }
 
   void _updateGanZhi() {

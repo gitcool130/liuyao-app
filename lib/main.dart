@@ -35,37 +35,7 @@ void main() async {
       if (content != null && content.isNotEmpty) {
         // 用对话框让用户确认是否跳转，避免丢失当前编辑状态
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          final context = navigatorKey.currentContext;
-          if (context != null) {
-            showDialog(
-              context: context,
-              barrierDismissible: true,
-              builder: (ctx) => AlertDialog(
-                title: const Text('收到排盘分享'),
-                content: const Text('当前页面未保存的编辑内容（如解卦笔记）将会丢失。\n\n是否打开导入页面？'),
-                actions: [
-                  TextButton(
-                    onPressed: () { Navigator.pop(ctx); _sharingLock = false; },
-                    child: const Text('取消'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      // 先自动保存当前编辑内容
-                      await AutoSave.flushAll();
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      navigatorKey.currentState?.push(
-                        MaterialPageRoute(builder: (_) => ImportScreen(sharedContent: content)),
-                      );
-                      _sharingLock = false;
-                    },
-                    child: const Text('打开并保存'),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            _sharingLock = false;
-          }
+          _showShareDialog(content);
         });
       } else {
         _sharingLock = false;
@@ -73,7 +43,55 @@ void main() async {
     }
   });
 
+  /// 冷启动时检查分享intent
+  _checkColdStartShare(shareChannel);
+
   runApp(LiuYaoApp(settingsProvider: settingsProvider));
+}
+
+/// 显示分享确认对话框
+void _showShareDialog(String content) {
+  final context = navigatorKey.currentContext;
+  if (context == null) { _sharingLock = false; return; }
+
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (ctx) => AlertDialog(
+      title: const Text('收到排盘分享'),
+      content: const Text('是否打开并导入排盘？\n\n当前页面的解卦笔记将自动保存。'),
+      actions: [
+        TextButton(
+          onPressed: () { Navigator.pop(ctx); _sharingLock = false; },
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            await AutoSave.flushAll();
+            if (ctx.mounted) Navigator.pop(ctx);
+            navigatorKey.currentState?.push(
+              MaterialPageRoute(builder: (_) => ImportScreen(sharedContent: content)),
+            );
+            _sharingLock = false;
+          },
+          child: const Text('打开'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// 冷启动时检查是否有分享intent
+void _checkColdStartShare(MethodChannel channel) {
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      final content = await channel.invokeMethod<String>('getSharedFileContent');
+      if (content != null && content.isNotEmpty && !_sharingLock) {
+        _sharingLock = true;
+        _showShareDialog(content);
+      }
+    } catch (_) {}
+  });
 }
 
 class LiuYaoApp extends StatelessWidget {

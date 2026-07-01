@@ -10,11 +10,13 @@ import java.io.InputStreamReader
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.bobo.liuyao_app/share"
+    private var methodChannel: MethodChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel?.setMethodCallHandler { call, result ->
             if (call.method == "getSharedFileContent") {
                 val content = readSharedFileContent(intent)
                 result.success(content)
@@ -27,6 +29,13 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+
+        // App已在运行时收到新的分享intent，主动通知Flutter端
+        val content = readSharedFileContent(intent)
+        if (content != null && methodChannel != null) {
+            // 向Flutter端发送新的分享内容
+            methodChannel?.invokeMethod("getSharedFileContent", content)
+        }
     }
 
     private fun readSharedFileContent(intent: Intent?): String? {
