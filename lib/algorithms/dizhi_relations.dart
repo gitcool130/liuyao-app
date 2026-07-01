@@ -91,8 +91,9 @@ class DiZhiRelations {
     return null;
   }
 
-  /// 检查两个地支是否半合（三合局中的两个）
-  static bool isBanHe(String dz1, String dz2) {
+  /// 检查两个地支是否同属一个三合局（内部辅助方法）
+  /// 六爻无"半三合"概念，仅供内部计算使用
+  static bool _isInSameSanHeGroup(String dz1, String dz2) {
     for (final ju in sanHe) {
       final has1 = ju.contains(dz1);
       final has2 = ju.contains(dz2);
@@ -101,8 +102,8 @@ class DiZhiRelations {
     return false;
   }
 
-  /// 获取半合局的第三个地支
-  static String? getBanHeThird(String dz1, String dz2) {
+  /// 获取三合局的第三个地支（内部辅助）
+  static String? _getSanHeThird(String dz1, String dz2) {
     for (final ju in sanHe) {
       if (ju.contains(dz1) && ju.contains(dz2) && dz1 != dz2) {
         return ju.firstWhere((d) => d != dz1 && d != dz2);
@@ -150,12 +151,12 @@ class DiZhiRelations {
   }
 
   /// 获取生克关系描述
+  /// 注意：六爻无"半三合"概念，两个地支同属三合组不单独显示
   static String? getRelationDesc(String dz1, String dz2) {
     if (isChong(dz1, dz2)) return '冲';
     if (isHe(dz1, dz2)) return '合';
     if (isSheng(dz1, dz2)) return '生';
     if (isKe(dz1, dz2)) return '克';
-    if (isBanHe(dz1, dz2)) return '半合';
     return null;
   }
 
@@ -168,17 +169,15 @@ class DiZhiRelations {
   static const int relationChong = 1;   // 冲
   static const int relationHe = 2;        // 合
   static const int relationSanHe = 3;     // 三合
-  static const int relationBanHe = 4;     // 半合
-  static const int relationSheng = 5;     // 生
-  static const int relationKe = 6;        // 克
+  static const int relationSheng = 4;     // 生
+  static const int relationKe = 5;        // 克
 
-  /// 获取关系类型（优先级：冲>合>半合>生>克）
-  /// 注意：三合需要三个地支，两个地支时用半合判断
+  /// 获取关系类型（优先级：冲>合>生>克）
+  /// 注意：六爻只有三合局（三个齐全），无半三合概念
+  /// 两个地支同属三合组不单独判断为关系
   static int getRelationType(String dz1, String dz2) {
     if (isChong(dz1, dz2)) return relationChong;
     if (isHe(dz1, dz2)) return relationHe;
-    // 三合需要三个地支，两个地支用半合判断
-    if (isBanHe(dz1, dz2)) return relationBanHe;
     if (isSheng(dz1, dz2)) return relationSheng;
     if (isKe(dz1, dz2)) return relationKe;
     return relationNone;
@@ -189,7 +188,6 @@ class DiZhiRelations {
     relationChong: 0xFFE53935, // 红色
     relationHe: 0xFF43A047,      // 绿色
     relationSanHe: 0xFF43A047,   // 绿色（三合）
-    relationBanHe: 0xFF43A047,   // 绿色（半合）
     relationSheng: 0xFFFFB300,   // 黄色
     relationKe: 0xFF1E88E5,      // 蓝色
   };

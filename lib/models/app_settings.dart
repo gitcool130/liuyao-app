@@ -64,9 +64,8 @@ class AppSettings {
       case 1: return chongLineColor; // 冲
       case 2: return heLineColor;    // 合
       case 3: return heLineColor;    // 三合（复用合色）
-      case 4: return heLineColor;    // 半合（复用合色）
-      case 5: return shengLineColor; // 生
-      case 6: return keLineColor;    // 克
+      case 4: return shengLineColor; // 生
+      case 5: return keLineColor;    // 克
       default: return const Color(0xFF757575);
     }
   }

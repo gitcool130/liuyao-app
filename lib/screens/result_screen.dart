@@ -550,6 +550,7 @@ class _ResultScreenState extends State<ResultScreen> {
   };
 
   /// 计算三合局，返回(被标记的爻位置集合, 描述文本列表)
+  /// 六爻三合局必须三个地支齐全（本卦三爻、或本卦二爻+日月、或本变对位）
   ({Set<int> markedPositions, List<String> descriptions}) _calculateSanHe(DivinationRecord record) {
     final marked = <int>{};
     final descs = <String>[];
@@ -579,15 +580,15 @@ class _ResultScreenState extends State<ResultScreen> {
       final heName = entry.key;
       final zhongShen = group[1]; // 中神：子、午、酉、卯
 
-      // ---- 类型1: 本卦三个爻组成三合 ----
+      // ---- 类型1: 本卦三个爻组成三合（三个齐全）----
       final benMatches = benZhi.entries.where((e) => group.contains(e.value)).map((e) => e.key).toList()..sort();
-      if (benMatches.length >= 3) {
+      if (benMatches.length == 3) {
         marked.addAll(benMatches);
         descs.add('本卦${benMatches.join("、")}爻 → $heName');
+        continue; // 已凑齐，无需继续判断该组
       }
 
       // ---- 类型2: 本卦+变卦对位三合 ----
-      // 变卦初爻+三爻 配 本卦初爻或三爻
       if (bianZhi.isNotEmpty) {
         // 初爻三爻组
         final b13 = [bianZhi[1], bianZhi[3]].whereType<String>().toList();
@@ -595,8 +596,7 @@ class _ResultScreenState extends State<ResultScreen> {
         final all13 = {...b13, ...bg13};
         if (all13.length >= 3) {
           final g13 = all13.where((z) => group.contains(z)).toList()..sort();
-          if (g13.length >= 3) {
-            // 标记涉及的爻
+          if (g13.length == 3) {
             for (final z in g13) {
               for (final e in benZhi.entries) { if (e.value == z) marked.add(e.key); }
               for (final e in bianZhi.entries) { if (e.value == z) marked.add(e.key); }
@@ -611,7 +611,7 @@ class _ResultScreenState extends State<ResultScreen> {
         final all46 = {...b46, ...bg46};
         if (all46.length >= 3) {
           final g46 = all46.where((z) => group.contains(z)).toList()..sort();
-          if (g46.length >= 3) {
+          if (g46.length == 3) {
             for (final z in g46) {
               for (final e in benZhi.entries) { if (e.value == z) marked.add(e.key); }
               for (final e in bianZhi.entries) { if (e.value == z) marked.add(e.key); }
@@ -621,10 +621,12 @@ class _ResultScreenState extends State<ResultScreen> {
         }
       }
 
-      // ---- 类型3: 中神在本卦，日月参与三合 ----
-      if (benZhi.values.any((z) => z == zhongShen)) {
+      // ---- 类型3: 本卦至少两爻 + 日月参与三合 ----
+      // 本卦中至少有两个爻的地支属于该组
+      final benGroupMatches = benZhi.entries.where((e) => group.contains(e.value)).map((e) => e.key).toList();
+      if (benGroupMatches.length >= 2) {
         final allZhi = {...benZhi.values, monthZhi, dayZhi}.where((z) => group.contains(z)).toList();
-        if (allZhi.length >= 3) {
+        if (allZhi.length == 3) {
           // 标记本卦中属于该三合组的地支
           for (final e in benZhi.entries) {
             if (group.contains(e.value)) marked.add(e.key);
@@ -633,7 +635,7 @@ class _ResultScreenState extends State<ResultScreen> {
           final sources = <String>[];
           if (group.contains(monthZhi)) sources.add('月$monthZhi');
           if (group.contains(dayZhi)) sources.add('日$dayZhi');
-          descs.add('本卦$zhongShen(中神) ${sources.join(" ")} → $heName');
+          descs.add('本卦${benGroupMatches.join("、")}爻 ${sources.join(" ")} → $heName');
         }
       }
     }
