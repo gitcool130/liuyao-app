@@ -32,17 +32,37 @@ void main() async {
       _sharingLock = true;
       final content = call.arguments as String?;
       if (content != null && content.isNotEmpty) {
-        // 清除导航栈回到首页，再打开导入页
-        navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (route) => route.isFirst,
-        );
-        // 延迟一帧确保首页已加载
+        // 用对话框让用户确认是否跳转，避免丢失当前编辑状态
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          navigatorKey.currentState?.push(
-            MaterialPageRoute(builder: (_) => ImportScreen(sharedContent: content)),
-          );
-          _sharingLock = false;
+          final context = navigatorKey.currentContext;
+          if (context != null) {
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (ctx) => AlertDialog(
+                title: const Text('收到排盘分享'),
+                content: const Text('是否打开导入页面？当前排盘或编辑状态将保持，导入后可继续操作。'),
+                actions: [
+                  TextButton(
+                    onPressed: () { Navigator.pop(ctx); _sharingLock = false; },
+                    child: const Text('忽略'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      navigatorKey.currentState?.push(
+                        MaterialPageRoute(builder: (_) => ImportScreen(sharedContent: content)),
+                      );
+                      _sharingLock = false;
+                    },
+                    child: const Text('打开'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            _sharingLock = false;
+          }
         });
       } else {
         _sharingLock = false;
@@ -52,10 +72,6 @@ void main() async {
 
   runApp(LiuYaoApp(settingsProvider: settingsProvider));
 }
-
-class LiuYaoApp extends StatelessWidget {
-  final SettingsProvider settingsProvider;
-  const LiuYaoApp({super.key, required this.settingsProvider});
 
 class LiuYaoApp extends StatelessWidget {
   final SettingsProvider settingsProvider;
