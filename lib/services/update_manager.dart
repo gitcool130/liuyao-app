@@ -89,7 +89,7 @@ class UpdateManager {
     _progress = 0;
 
     final url = '${FeatureLockService.serverUrl}${info.url}';
-    final dir = await getApplicationDocumentsDirectory();
+    final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/liuyao-assistant.apk');
 
     // 检查已有文件是否对应同一个版本
@@ -113,9 +113,8 @@ class UpdateManager {
         }
 
         final client = HttpClient();
-        client.connectionTimeout = const Duration(seconds: 15);
-        // 总超时：5分钟（87MB/3Mbps ≈ 4分钟，给足余量）
-        client.idleTimeout = const Duration(minutes: 8);
+        client.connectionTimeout = const Duration(seconds: 10);
+        client.idleTimeout = const Duration(minutes: 10);
 
         final request = await client.getUrl(Uri.parse(url));
         if (existingBytes > 0) {
@@ -163,11 +162,10 @@ class UpdateManager {
       return false;
     }
 
-    // MD5校验（如果服务器提供了md5）
+    // MD5校验（流式读取，避免OOM）
     if (info.md5.isNotEmpty) {
       try {
-        final bytes = await file.readAsBytes();
-        final digest = _md5Hash(bytes);
+        final digest = await _md5File(file);
         if (digest != info.md5) {
           await file.delete();
           _status = DownloadStatus.none;
@@ -190,8 +188,16 @@ class UpdateManager {
     return true;
   }
 
-  /// MD5哈希
-  static String _md5Hash(List<int> data) => md5.convert(data).toString();
+  /// 流式MD5（不将整个文件加载到内存）
+  static Future<String> _md5File(File file) async {
+    final hash = md5.start();
+    final stream = file.openRead();
+    await for (final chunk in stream) {
+      hash.add(chunk);
+    }
+    hash.close();
+    return hash.value.toString();
+  }
 
   static const _installChannel = MethodChannel('com.bobo.liuyao_app/install');
 
