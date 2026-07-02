@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../algorithms/ganzhi_converter.dart';
@@ -12,11 +11,8 @@ import '../screens/course_notes_screen.dart';
 import '../screens/shensha_detail_screen.dart';
 import '../screens/browser_screen.dart';
 import '../screens/image_import_screen.dart';
-import 'dart:convert';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:open_filex/open_filex.dart';
 import '../services/feature_lock_service.dart';
+import '../services/update_manager.dart';
 import '../version.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -40,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _divTime = DateTime.now();
     _loadUnlocked();
     _updateGanZhi();
+    _checkPendingInstall();
     _checkUpdate();
   }
 
@@ -79,106 +76,117 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() => _unlockedFeatures = unlocked);
   }
 
-  void _checkUpdate() async {
-    final info = await FeatureLockService.checkUpdate();
-    if (!mounted || info == null) return;
+  /// 检查是否有待安装的安装包（上次退出时未安装）
+  void _checkPendingInstall() async {
+    final hasPending = await UpdateManager.hasPendingInstall();
+    if (!mounted || !hasPending) return;
 
-    final currentBuild = appBuildNumber; // 从version.dart动态读取
-    final serverBuild = info['buildNumber'] as int? ?? 0;
-    if (serverBuild <= currentBuild) return;
-
-    if (!mounted) return;
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: Row(children: [
-          const Icon(Icons.system_update, color: Colors.blue),
-          const SizedBox(width: 8),
-          const Text('发现新版本'),
+        title: const Row(children: [
+          Icon(Icons.system_update, color: Colors.orange),
+          SizedBox(width: 8),
+          Text('更新待安装'),
         ]),
-        content: Text('v${info['version']} (构建${serverBuild})\n\n${info['description'] ?? ''}\n\n${info['forceUpdate'] == true ? '⚠️ 此版本为强制更新' : ''}'),
+        content: const Text('检测到有已下载的更新包，是否立即安装？'),
         actions: [
-          if (info['forceUpdate'] != true)
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('稍后')),
+          TextButton(
+            onPressed: () { Navigator.pop(ctx); UpdateManager.cleanUp(); },
+            child: const Text('忽略'),
+          ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              _downloadApk(info['url'] as String);
+              final err = await UpdateManager.install();
+              if (err != null && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('安装失败：$err')),
+                );
+              }
             },
-            child: const Text('立即更新'),
+            child: const Text('安装'),
           ),
         ],
       ),
     );
   }
 
-  void _downloadApk(String urlPath) async {
-    final url = '${FeatureLockService.serverUrl}$urlPath';
-    final snackBar = ScaffoldMessenger.of(context);
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/liuyao-assistant.apk');
+  /// 检查更新
+  void _checkUpdate() async {
+    final info = await UpdateManager.checkUpdate(appBuildNumber);
+    if (!mounted || info == null) return;
 
-    try {
-      // 检查已有文件大小，实现断点续传
-      final existingBytes = file.existsSync() ? await file.length() : 0;
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(children: [
+          Icon(Icons.system_update, color: Colors.blue),
+          SizedBox(width: 8),
+          Text('发现新版本'),
+        ]),
+        content: Text('v${info.version} (构建${info.buildNumber})\n\n${info.description}\n\n${info.apkSize > 0 ? 'APK大小: ${(info.apkSize / 1048576).toStringAsFixed(1)}MB' : ''}'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('稍后')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _startUpdate(info);
+            },
+            child: const Text('下载更新'),
+          ),
+        ],
+      ),
+    );
+  }
 
-      final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 30);
-      final request = await client.getUrl(Uri.parse(url));
+  /// 后台下载并提示安装
+  void _startUpdate(UpdateInfo info) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('正在后台下载更新...'), duration: Duration(seconds: 5)),
+    );
 
-      if (existingBytes > 0) {
-        request.headers.set('Range', 'bytes=$existingBytes-');
-      }
+    final ok = await UpdateManager.startDownload(info);
 
-      final response = await request.close();
-
-      if (response.statusCode == 206 || response.statusCode == 200) {
-        final total = response.contentLength + existingBytes;
-        snackBar.showSnackBar(SnackBar(
-          content: Text(existingBytes > 0
-              ? '继续下载 ${(existingBytes / 1048576).toStringAsFixed(1)}M / ${(total / 1048576).toStringAsFixed(1)}M...'
-              : '正在下载更新 (${(total / 1048576).toStringAsFixed(1)}M)...'),
-          duration: const Duration(seconds: 30),
-        ));
-
-        // 追加或新建写入
-        final mode = existingBytes > 0 ? FileMode.append : FileMode.write;
-        await response.pipe(file.openWrite(mode: mode));
-
-        // 验证完整性：对比 server 返回的 apkSize
-        // 重定向 check_update 获取实际大小
-        final verifyClient = HttpClient();
-        final verifyReq = await verifyClient.getUrl(Uri.parse('${FeatureLockService.serverUrl}/api/check_update'));
-        final verifyResp = await verifyReq.close();
-        String body = await verifyResp.transform(utf8.decoder).join();
-        // 简单判断：文件大于 80MB 基本就完整了
-        final fileSize = await file.length();
-
-        snackBar.showSnackBar(const SnackBar(content: Text('下载完成，正在安装...'), duration: Duration(seconds: 3)));
-
-        // 触发系统安装
-        final result = await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
-        if (result.type != ResultType.done) {
-          // 安装失败时复制链接到剪贴板
-          Clipboard.setData(ClipboardData(text: url));
-          snackBar.showSnackBar(SnackBar(
-            content: Text('安装失败(${result.message})，下载链接已复制到剪贴板'),
-            duration: const Duration(seconds: 8),
-          ));
-        }
-      } else if (response.statusCode == 416) {
-        // Range 超出范围 - 文件已完整，直接安装
-        snackBar.showSnackBar(const SnackBar(content: Text('文件已下载，正在安装...'), duration: Duration(seconds: 3)));
-        final result = await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
-        if (result.type != ResultType.done) {
-          Clipboard.setData(ClipboardData(text: url));
-          snackBar.showSnackBar(SnackBar(content: Text('安装失败(${result.message})'), duration: Duration(seconds: 5)));
-        }
-      } else {
-        snackBar.showSnackBar(SnackBar(content: Text('下载失败: HTTP ${response.statusCode}')));
-      }
-    } catch (e) {
-      snackBar.showSnackBar(SnackBar(content: Text('下载失败：$e'), duration: Duration(seconds: 5)));
+    if (!mounted) return;
+    if (ok) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('下载完成'),
+          ]),
+          content: const Text('更新包已下载并校验通过，是否立即安装？\n\n选择"稍后"可稍后在首页顶部提示安装。'),
+          actions: [
+            TextButton(
+              onPressed: () { Navigator.pop(ctx); },
+              child: const Text('稍后'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final err = await UpdateManager.install();
+                if (err != null && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('安装失败：$err')),
+                  );
+                } else {
+                  UpdateManager.cleanUp();
+                }
+              },
+              child: const Text('立即安装'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('下载失败，请稍后重试')),
+      );
     }
   }
 
