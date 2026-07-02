@@ -5,7 +5,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:open_filex/open_filex.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'feature_lock_service.dart';
@@ -140,6 +140,8 @@ class UpdateManager {
     return false;
   }
 
+  static const _installChannel = MethodChannel('com.bobo.liuyao_app/install');
+
   /// 触发安装
   static Future<String?> install() async {
     if (_cachedApkPath == null) {
@@ -151,12 +153,16 @@ class UpdateManager {
     final file = File(_cachedApkPath!);
     if (!file.existsSync()) return '安装包文件不存在';
 
-    final result = await OpenFilex.open(_cachedApkPath!, type: 'application/vnd.android.package-archive');
-    if (result.type == ResultType.done) {
-      _status = DownloadStatus.installed;
-      return null; // 成功
+    try {
+      final success = await _installChannel.invokeMethod<bool>('installApk', {'path': _cachedApkPath});
+      if (success == true) {
+        _status = DownloadStatus.installed;
+        return null;
+      }
+      return '启动安装程序失败，请在文件管理器中手动安装';
+    } catch (e) {
+      return '安装失败：$e';
     }
-    return result.message ?? '安装失败';
   }
 
   /// 安装完成后清理
