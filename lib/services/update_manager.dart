@@ -5,6 +5,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +21,7 @@ class UpdateInfo {
   final String description;
   final int apkSize;
   final String url;
+  final String md5;
 
   UpdateInfo({
     required this.version,
@@ -27,6 +29,7 @@ class UpdateInfo {
     required this.description,
     required this.apkSize,
     required this.url,
+    this.md5 = '',
   });
 
   factory UpdateInfo.fromJson(Map<String, dynamic> json) => UpdateInfo(
@@ -35,6 +38,7 @@ class UpdateInfo {
     description: json['description'] as String? ?? '',
     apkSize: json['apkSize'] as int? ?? 0,
     url: json['url'] as String? ?? '/apk/liuyao-assistant.apk',
+    md5: json['md5'] as String? ?? '',
   );
 }
 
@@ -79,7 +83,7 @@ class UpdateManager {
     return true;
   }
 
-  /// 开始后台下载
+  /// 开始后台下载（带MD5校验）
   static Future<bool> startDownload(UpdateInfo info) async {
     _status = DownloadStatus.downloading;
     _progress = 0;
@@ -92,53 +96,90 @@ class UpdateManager {
       final existingBytes = file.existsSync() ? await file.length() : 0;
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 30);
-      final request = await client.getUrl(Uri.parse(url));
 
+      // 有续传时先校验已有部分是否完整（查服务端APK大小）
+      if (existingBytes > 0) {
+        if (existingBytes >= info.apkSize) {
+          // 已有文件大小 ≥ 预期大小，直接校验MD5
+          return await _verifyAndSave(file.path, info);
+        }
+        // 否则发起续传请求
+      }
+
+      final request = await client.getUrl(Uri.parse(url));
       if (existingBytes > 0) {
         request.headers.set('Range', 'bytes=$existingBytes-');
       }
 
       final response = await request.close();
 
-      if (response.statusCode == 206 || response.statusCode == 200) {
-        final total = existingBytes + (response.contentLength > 0 ? response.contentLength : 0);
-        final mode = existingBytes > 0 ? FileMode.append : FileMode.write;
-        final sink = file.openWrite(mode: mode);
-
+      // 处理续传响应：206=续传成功，200=服务器不支持续传（重新下载）
+      if (response.statusCode == 206) {
+        // 续传模式，追加写入
+        final sink = file.openWrite(mode: FileMode.append);
         await response.pipe(sink);
-
-        // 校验：文件应有基本大小
-        final finalSize = await file.length();
-        if (finalSize < 80 * 1024 * 1024) {
-          _status = DownloadStatus.none;
-          return false;
+        return await _verifyAndSave(file.path, info);
+      } else if (response.statusCode == 200) {
+        // 服务器不支持续传或range无效，重新下载
+        if (existingBytes > 0) {
+          // 删除不完整的文件，重新下载
+          await file.delete();
         }
-
-        // 保存待安装状态
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_apkKey, file.path);
-        await prefs.setInt(_buildKey, info.buildNumber);
-        _cachedApkPath = file.path;
-        _targetBuild = info.buildNumber;
-        _status = DownloadStatus.pendingInstall;
-        _progress = 1.0;
-        return true;
+        final sink = file.openWrite(mode: FileMode.write);
+        await response.pipe(sink);
+        return await _verifyAndSave(file.path, info);
       } else if (response.statusCode == 416) {
-        // 文件已完整
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_apkKey, file.path);
-        await prefs.setInt(_buildKey, info.buildNumber);
-        _cachedApkPath = file.path;
-        _targetBuild = info.buildNumber;
-        _status = DownloadStatus.pendingInstall;
-        _progress = 1.0;
-        return true;
+        // Range超出范围，文件已完整
+        return await _verifyAndSave(file.path, info);
       }
     } catch (_) {
       _status = DownloadStatus.none;
     }
     return false;
   }
+
+  /// 校验APK完整性并保存状态
+  static Future<bool> _verifyAndSave(String filePath, UpdateInfo info) async {
+    final file = File(filePath);
+    final fileSize = await file.length();
+    final expectedSize = info.apkSize;
+
+    // 大小校验
+    if (fileSize != expectedSize) {
+      await file.delete();
+      _status = DownloadStatus.none;
+      return false;
+    }
+
+    // MD5校验（如果服务器提供了md5）
+    if (info.md5.isNotEmpty) {
+      try {
+        final bytes = await file.readAsBytes();
+        final digest = _md5Hash(bytes);
+        if (digest != info.md5) {
+          await file.delete();
+          _status = DownloadStatus.none;
+          return false;
+        }
+      } catch (_) {
+        await file.delete();
+        return false;
+      }
+    }
+
+    // 保存待安装状态
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_apkKey, file.path);
+    await prefs.setInt(_buildKey, info.buildNumber);
+    _cachedApkPath = file.path;
+    _targetBuild = info.buildNumber;
+    _status = DownloadStatus.pendingInstall;
+    _progress = 1.0;
+    return true;
+  }
+
+  /// MD5哈希
+  static String _md5Hash(List<int> data) => md5.convert(data).toString();
 
   static const _installChannel = MethodChannel('com.bobo.liuyao_app/install');
 
