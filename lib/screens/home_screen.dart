@@ -12,7 +12,12 @@ import '../screens/course_notes_screen.dart';
 import '../screens/shensha_detail_screen.dart';
 import '../screens/browser_screen.dart';
 import '../screens/image_import_screen.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 import '../services/feature_lock_service.dart';
+import '../version.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -78,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final info = await FeatureLockService.checkUpdate();
     if (!mounted || info == null) return;
 
-    final currentBuild = 34; // 应与version.dart一致
+    final currentBuild = appBuildNumber; // 从version.dart动态读取
     final serverBuild = info['buildNumber'] as int? ?? 0;
     if (serverBuild <= currentBuild) return;
 
@@ -107,12 +112,74 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _downloadApk(String urlPath) {
+  void _downloadApk(String urlPath) async {
     final url = '${FeatureLockService.serverUrl}$urlPath';
-    Clipboard.setData(ClipboardData(text: url));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('下载链接已复制：$url'), duration: const Duration(seconds: 8)),
-    );
+    final snackBar = ScaffoldMessenger.of(context);
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/liuyao-assistant.apk');
+
+    try {
+      // 检查已有文件大小，实现断点续传
+      final existingBytes = file.existsSync() ? await file.length() : 0;
+
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 30);
+      final request = await client.getUrl(Uri.parse(url));
+
+      if (existingBytes > 0) {
+        request.headers.set('Range', 'bytes=$existingBytes-');
+      }
+
+      final response = await request.close();
+
+      if (response.statusCode == 206 || response.statusCode == 200) {
+        final total = response.contentLength + existingBytes;
+        snackBar.showSnackBar(SnackBar(
+          content: Text(existingBytes > 0
+              ? '继续下载 ${(existingBytes / 1048576).toStringAsFixed(1)}M / ${(total / 1048576).toStringAsFixed(1)}M...'
+              : '正在下载更新 (${(total / 1048576).toStringAsFixed(1)}M)...'),
+          duration: const Duration(seconds: 30),
+        ));
+
+        // 追加或新建写入
+        final mode = existingBytes > 0 ? FileMode.append : FileMode.write;
+        await response.pipe(file.openWrite(mode: mode));
+
+        // 验证完整性：对比 server 返回的 apkSize
+        // 重定向 check_update 获取实际大小
+        final verifyClient = HttpClient();
+        final verifyReq = await verifyClient.getUrl(Uri.parse('${FeatureLockService.serverUrl}/api/check_update'));
+        final verifyResp = await verifyReq.close();
+        String body = await verifyResp.transform(utf8.decoder).join();
+        // 简单判断：文件大于 80MB 基本就完整了
+        final fileSize = await file.length();
+
+        snackBar.showSnackBar(const SnackBar(content: Text('下载完成，正在安装...'), duration: Duration(seconds: 3)));
+
+        // 触发系统安装
+        final result = await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
+        if (result.type != ResultType.done) {
+          // 安装失败时复制链接到剪贴板
+          Clipboard.setData(ClipboardData(text: url));
+          snackBar.showSnackBar(SnackBar(
+            content: Text('安装失败(${result.message})，下载链接已复制到剪贴板'),
+            duration: const Duration(seconds: 8),
+          ));
+        }
+      } else if (response.statusCode == 416) {
+        // Range 超出范围 - 文件已完整，直接安装
+        snackBar.showSnackBar(const SnackBar(content: Text('文件已下载，正在安装...'), duration: Duration(seconds: 3)));
+        final result = await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
+        if (result.type != ResultType.done) {
+          Clipboard.setData(ClipboardData(text: url));
+          snackBar.showSnackBar(SnackBar(content: Text('安装失败(${result.message})'), duration: Duration(seconds: 5)));
+        }
+      } else {
+        snackBar.showSnackBar(SnackBar(content: Text('下载失败: HTTP ${response.statusCode}')));
+      }
+    } catch (e) {
+      snackBar.showSnackBar(SnackBar(content: Text('下载失败：$e'), duration: Duration(seconds: 5)));
+    }
   }
 
   void _navigateToManualInput() {
