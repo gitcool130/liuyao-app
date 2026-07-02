@@ -384,7 +384,7 @@ class _YaoSymbolCell extends StatelessWidget {
     final isDong = yao.isDong;
 
     // 动爻标记符号○✕用更大字号渲染
-    final double symbolFontSize = isDong ? fontSize * 1.6 : fontSize;
+    final double symbolFontSize = isDong ? fontSize * 1.2 : fontSize;
 
     return Container(
       width: width,
@@ -392,7 +392,7 @@ class _YaoSymbolCell extends StatelessWidget {
       child: RichText(
           text: TextSpan(
             children: [
-              if (isDong && symbol.contains('○'))
+              if (isDong && symbol.contains('◯'))
                 TextSpan(
                   text: '▅▅▅▅▅',
                   style: TextStyle(fontSize: fontSize, color: dongColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
@@ -409,7 +409,7 @@ class _YaoSymbolCell extends StatelessWidget {
                 ),
               if (isDong)
                 TextSpan(
-                  text: symbol.contains('○') ? '○' : '✕',
+                  text: symbol.contains('◯') ? '◯' : '✕',
                   style: TextStyle(fontSize: symbolFontSize, color: dongColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
                 ),
             ],
@@ -441,7 +441,7 @@ class _BianYaoCell extends StatelessWidget {
     // 变卦爻象符号
     String symbol;
     if (yao.bianYaoType == YaoType.laoYang) {
-      symbol = '▅▅▅▅▅○';
+      symbol = '▅▅▅▅▅◯';
     } else if (yao.bianYaoType == YaoType.laoYin) {
       symbol = '▅▅ ▅▅✕';
     } else if (yao.bianYaoType == YaoType.shaoYang) {
