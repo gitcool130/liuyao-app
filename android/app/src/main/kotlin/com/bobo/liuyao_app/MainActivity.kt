@@ -57,19 +57,40 @@ class MainActivity : FlutterActivity() {
     private fun installApk(filePath: String): Boolean {
         return try {
             val file = File(filePath)
+            android.util.Log.d("LiYaoInstall", "filePath=$filePath exists=${file.exists()} size=${file.length()}")
+
             val uri: Uri = FileProvider.getUriForFile(
                 this,
                 "${packageName}.fileprovider",
                 file
             )
+            android.util.Log.d("LiYaoInstall", "uri=$uri")
+
             val installIntent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, "application/vnd.android.package-archive")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
-            startActivity(installIntent)
-            true
+
+            // Android 14+ 需要额外的权限检查
+            val pm = packageManager
+            if (pm.canRequestPackageInstalls()) {
+                startActivity(installIntent)
+                true
+            } else {
+                // 引导用户开启安装权限
+                val settingsIntent = Intent(
+                    android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName")
+                )
+                settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(settingsIntent)
+                android.util.Log.d("LiYaoInstall", "引导用户开启安装权限")
+                false
+            }
         } catch (e: Exception) {
+            android.util.Log.e("LiYaoInstall", "安装失败", e)
             false
         }
     }
