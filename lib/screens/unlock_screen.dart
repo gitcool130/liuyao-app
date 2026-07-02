@@ -61,16 +61,13 @@ class _UnlockScreenState extends State<UnlockScreen> {
     final deviceId = _deviceId;
     if (deviceId == null) { setState(() => _verifying = false); return; }
 
-    // 1. 优先在线验证
-    final allCodes = lockedFeatures.map((f) => f.code).join(',');
-    var result = await FeatureLockService.onlineVerify(
+    // 纯服务器验证（App不存储密钥）
+    final result = await FeatureLockService.verifyCode(
       deviceId: deviceId,
-      featureCode: allCodes,
       code: code,
     );
 
     if (result.valid) {
-      // 在线验证成功，解锁全部功能
       for (final feature in lockedFeatures) {
         if (!_unlockedFeatures.contains(feature.code)) {
           await FeatureLockService.unlock(feature.code, result.expireDate);
@@ -81,49 +78,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
       expireDate = result.expireDate;
       setState(() => _message = '✅ 全部功能已解锁！有效期至 ${result.expireDate}');
     } else {
-      // 2. 在线失败，回退到本地验证
-      for (final feature in lockedFeatures) {
-        if (_unlockedFeatures.contains(feature.code)) continue;
-
-        result = FeatureLockService.verifyCode(
-          deviceId: deviceId,
-          featureCode: feature.code,
-          code: code,
-        );
-
-        if (result.valid) {
-          await FeatureLockService.unlock(feature.code, result.expireDate);
-          _unlockedFeatures.add(feature.code);
-          anyUnlocked = true;
-          expireDate = result.expireDate;
-          setState(() => _message = '✅ ${feature.name} 已解锁！有效期至 ${result.expireDate}');
-          break;
-        }
-      }
-
-      // 3. 尝试本地组合码
-      if (!anyUnlocked) {
-        result = FeatureLockService.verifyCode(
-          deviceId: deviceId,
-          featureCode: allCodes,
-          code: code,
-        );
-        if (result.valid) {
-          for (final feature in lockedFeatures) {
-            if (!_unlockedFeatures.contains(feature.code)) {
-              await FeatureLockService.unlock(feature.code, result.expireDate);
-              _unlockedFeatures.add(feature.code);
-            }
-          }
-          anyUnlocked = true;
-          expireDate = result.expireDate;
-          setState(() => _message = '✅ 全部功能已解锁！有效期至 ${result.expireDate}');
-        }
-      }
-    }
-
-    if (!anyUnlocked) {
-      setState(() => _message = '❌ 验证码无效或已过期，请联系管理员');
+      setState(() => _message = '❌ 验证码无效或已过期（服务器验证）');
     }
 
     setState(() => _verifying = false);
