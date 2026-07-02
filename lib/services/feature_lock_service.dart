@@ -56,7 +56,7 @@ class FeatureLockService {
   }
 
   /// 服务器地址（在线验证+更新检查）
-  static String serverUrl = 'https://www.bobolovesu.cn';
+  static String serverUrl = 'http://182.92.214.89:3456';
 
   /// SharedPreferences 键名
   static const String _prefsPrefix = 'unlocked_features_';
