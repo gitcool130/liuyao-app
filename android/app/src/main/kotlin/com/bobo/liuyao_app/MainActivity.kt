@@ -57,40 +57,46 @@ class MainActivity : FlutterActivity() {
     private fun installApk(filePath: String): Boolean {
         return try {
             val file = File(filePath)
-            android.util.Log.d("LiYaoInstall", "filePath=$filePath exists=${file.exists()} size=${file.length()}")
+            val fileSize = file.length()
+            android.util.Log.d("LiYaoInstall", "文件: path=$filePath exists=${file.exists()} size=${fileSize}")
+
+            // 复制到外部缓存目录，确保 FileProvider 可访问
+            val cacheFile = File(cacheDir, "update_${System.currentTimeMillis()}.apk")
+            file.copyTo(cacheFile, overwrite = true)
+            android.util.Log.d("LiYaoInstall", "缓存: path=${cacheFile.absolutePath}")
 
             val uri: Uri = FileProvider.getUriForFile(
                 this,
                 "${packageName}.fileprovider",
-                file
+                cacheFile
             )
-            android.util.Log.d("LiYaoInstall", "uri=$uri")
+            android.util.Log.d("LiYaoInstall", "URI: $uri")
 
-            val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/vnd.android.package-archive")
+            // 优先使用 ACTION_INSTALL_PACKAGE (Android 5+ 推荐方式)
+            val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+                data = uri
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
 
-            // Android 14+ 需要额外的权限检查
-            val pm = packageManager
-            if (pm.canRequestPackageInstalls()) {
+            // 检查是否有安装未知应用的权限
+            if (packageManager.canRequestPackageInstalls()) {
                 startActivity(installIntent)
+                android.util.Log.d("LiYaoInstall", "启动安装意图")
                 true
             } else {
-                // 引导用户开启安装权限
+                // 引导用户去设置中开启权限
+                android.util.Log.d("LiYaoInstall", "无安装权限，引导设置")
                 val settingsIntent = Intent(
                     android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                     Uri.parse("package:$packageName")
                 )
                 settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(settingsIntent)
-                android.util.Log.d("LiYaoInstall", "引导用户开启安装权限")
                 false
             }
         } catch (e: Exception) {
-            android.util.Log.e("LiYaoInstall", "安装失败", e)
+            android.util.Log.e("LiYaoInstall", "安装异常", e)
             false
         }
     }
