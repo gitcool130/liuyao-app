@@ -383,8 +383,8 @@ class _YaoSymbolCell extends StatelessWidget {
     final symbol = yao.yaoTypeSymbol;
     final isDong = yao.isDong;
 
-    // 动爻标记符号◎✕用更大字号渲染
-    final double symbolFontSize = isDong ? fontSize * 1.4 : fontSize;
+    // 动爻标记符号○✕用更大字号渲染
+    final double symbolFontSize = isDong ? fontSize * 1.6 : fontSize;
 
     return Container(
       width: width,
