@@ -54,6 +54,9 @@ class UpdateManager {
   static String? _cachedApkPath;
   static int _targetBuild = 0;
 
+  /// 进度回调
+  static void Function(double progress)? onProgress;
+
   /// 当前下载状态
   static DownloadStatus get status => _status;
   static double get progress => _progress;
@@ -106,7 +109,7 @@ class UpdateManager {
     await WakelockPlus.enable();
 
     try {
-      final existingBytes = file.existsSync() ? await file.length() : 0;
+      int existingBytes = file.existsSync() ? await file.length() : 0;
 
       // 已有完整文件，直接校验
       if (existingBytes >= info.apkSize) {
@@ -123,20 +126,27 @@ class UpdateManager {
       }
 
       final response = await request.close();
+      final totalBytes = existingBytes + (response.contentLength > 0 ? response.contentLength : 0);
 
-      if (response.statusCode == 206) {
-        // 续传
-        final sink = file.openWrite(mode: FileMode.append);
-        await response.pipe(sink);
-        return await _verifyAndSave(file.path, info);
-      } else if (response.statusCode == 200) {
-        // 不支持续传，重新下载
-        if (existingBytes > 0) await file.delete();
-        final sink = file.openWrite(mode: FileMode.write);
-        await response.pipe(sink);
+      if (response.statusCode == 206 || response.statusCode == 200) {
+        if (response.statusCode == 200 && existingBytes > 0) {
+          await file.delete();
+          existingBytes = 0;
+        }
+
+        final sink = file.openWrite(mode: existingBytes > 0 ? FileMode.append : FileMode.write);
+        int downloaded = existingBytes;
+
+        await for (final chunk in response) {
+          sink.add(chunk);
+          downloaded += chunk.length;
+          _progress = totalBytes > 0 ? downloaded / totalBytes : 0;
+          onProgress?.call(_progress);
+        }
+        await sink.close();
+
         return await _verifyAndSave(file.path, info);
       } else if (response.statusCode == 416) {
-        // 文件已完整
         return await _verifyAndSave(file.path, info);
       }
     } catch (_) {

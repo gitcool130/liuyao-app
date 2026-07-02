@@ -29,6 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _querentName = '';
   String _querentGender = '男';
   List<String> _unlockedFeatures = [];
+  bool _downloading = false;
+  double _downloadProgress = 0;
 
   @override
   void initState() {
@@ -142,15 +144,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// 后台下载并提示安装
+  /// 下载更新（底部进度条显示）
   void _startUpdate(UpdateInfo info) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('正在后台下载更新...'), duration: Duration(seconds: 5)),
-    );
+    setState(() => _downloading = true);
+    UpdateManager.onProgress = (p) {
+      if (mounted) setState(() => _downloadProgress = p);
+    };
 
     final ok = await UpdateManager.startDownload(info);
-
     if (!mounted) return;
+    setState(() { _downloading = false; _downloadProgress = 0; });
+
     if (ok) {
       showDialog(
         context: context,
@@ -160,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(width: 8),
             Text('下载完成'),
           ]),
-          content: const Text('更新包已下载并校验通过，是否立即安装？\n\n选择"稍后"可稍后在首页顶部提示安装。'),
+          content: const Text('更新包已下载并校验通过，是否立即安装？\n\n选择"稍后"可稍后在首页提示安装。'),
           actions: [
             TextButton(
               onPressed: () { Navigator.pop(ctx); },
@@ -185,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('下载失败，请稍后重试')),
+        const SnackBar(content: Text('下载失败，下次启动自动续传')),
       );
     }
   }
@@ -219,6 +223,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final formattedTime = DateFormat('yyyy年MM月dd日 HH:mm').format(_divTime);
 
     return Scaffold(
+      bottomNavigationBar: _downloading
+          ? SizedBox(
+              height: 4,
+              child: LinearProgressIndicator(value: _downloadProgress > 0 ? _downloadProgress : null),
+            )
+          : null,
       appBar: AppBar(
         title: const Text('六爻助手'),
         actions: [
