@@ -188,15 +188,10 @@ class UpdateManager {
     return true;
   }
 
-  /// 流式MD5（不将整个文件加载到内存）
+  /// 计算文件MD5
   static Future<String> _md5File(File file) async {
-    final sink = md5.createHashSink();
-    final stream = file.openRead();
-    await for (final chunk in stream) {
-      sink.add(chunk);
-    }
-    sink.close();
-    return sink.value().toString();
+    final bytes = await file.readAsBytes();
+    return md5.convert(bytes).toString();
   }
 
   static const _installChannel = MethodChannel('com.bobo.liuyao_app/install');
