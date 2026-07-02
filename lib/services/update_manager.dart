@@ -9,6 +9,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'feature_lock_service.dart';
 
 /// 下载状态
@@ -101,7 +102,11 @@ class UpdateManager {
       await prefs.remove(_buildKey);
     }
 
+    // 保持CPU唤醒，防止锁屏后下载中断
+    await WakelockPlus.enable();
+
     // 重试下载（最多3次）
+    try {
     for (int retry = 0; retry < 3; retry++) {
       if (retry > 0) await Future.delayed(const Duration(seconds: 2));
 
@@ -145,8 +150,16 @@ class UpdateManager {
       }
     }
 
-    _status = DownloadStatus.none;
     return false;
+    } finally {
+      _status = DownloadStatus.none;
+      await WakelockPlus.disable();
+    }
+  }
+
+  /// 下载成功后释放唤醒锁
+  static Future<void> _releaseWakelock() async {
+    await WakelockPlus.disable();
   }
 
   /// 校验APK完整性并保存状态
