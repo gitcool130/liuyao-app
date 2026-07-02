@@ -58,37 +58,52 @@ class _UnlockScreenState extends State<UnlockScreen> {
 
     bool anyUnlocked = false;
     String? expireDate;
+    final deviceId = _deviceId;
+    if (deviceId == null) { setState(() => _verifying = false); return; }
 
-    // 1. 先尝试各功能单独匹配
-    for (final feature in lockedFeatures) {
-      if (_unlockedFeatures.contains(feature.code)) continue;
+    // 1. 优先在线验证
+    final allCodes = lockedFeatures.map((f) => f.code).join(',');
+    var result = await FeatureLockService.onlineVerify(
+      deviceId: deviceId,
+      featureCode: allCodes,
+      code: code,
+    );
 
-      final deviceId = _deviceId;
-      if (deviceId == null) continue;
-      final result = FeatureLockService.verifyCode(
-        deviceId: deviceId,
-        featureCode: feature.code,
-        code: code,
-      );
-
-      if (result.valid) {
-        await FeatureLockService.unlock(feature.code, result.expireDate);
-        _unlockedFeatures.add(feature.code);
-        anyUnlocked = true;
-        expireDate = result.expireDate;
-        setState(() {
-          _message = '✅ ${feature.name} 已解锁！有效期至 ${result.expireDate}';
-        });
-        break;
+    if (result.valid) {
+      // 在线验证成功，解锁全部功能
+      for (final feature in lockedFeatures) {
+        if (!_unlockedFeatures.contains(feature.code)) {
+          await FeatureLockService.unlock(feature.code, result.expireDate);
+          _unlockedFeatures.add(feature.code);
+        }
       }
-    }
+      anyUnlocked = true;
+      expireDate = result.expireDate;
+      setState(() => _message = '✅ 全部功能已解锁！有效期至 ${result.expireDate}');
+    } else {
+      // 2. 在线失败，回退到本地验证
+      for (final feature in lockedFeatures) {
+        if (_unlockedFeatures.contains(feature.code)) continue;
 
-    // 2. 未匹配到单个功能，尝试匹配组合码（解锁全部功能）
-    if (!anyUnlocked) {
-      final deviceId = _deviceId;
-      if (deviceId != null) {
-        final allCodes = lockedFeatures.map((f) => f.code).join(',');
-        final result = FeatureLockService.verifyCode(
+        result = FeatureLockService.verifyCode(
+          deviceId: deviceId,
+          featureCode: feature.code,
+          code: code,
+        );
+
+        if (result.valid) {
+          await FeatureLockService.unlock(feature.code, result.expireDate);
+          _unlockedFeatures.add(feature.code);
+          anyUnlocked = true;
+          expireDate = result.expireDate;
+          setState(() => _message = '✅ ${feature.name} 已解锁！有效期至 ${result.expireDate}');
+          break;
+        }
+      }
+
+      // 3. 尝试本地组合码
+      if (!anyUnlocked) {
+        result = FeatureLockService.verifyCode(
           deviceId: deviceId,
           featureCode: allCodes,
           code: code,
@@ -102,9 +117,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
           }
           anyUnlocked = true;
           expireDate = result.expireDate;
-          setState(() {
-            _message = '✅ 全部功能已解锁！有效期至 ${result.expireDate}';
-          });
+          setState(() => _message = '✅ 全部功能已解锁！有效期至 ${result.expireDate}');
         }
       }
     }
