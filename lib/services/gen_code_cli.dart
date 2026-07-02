@@ -10,7 +10,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 
-const String _secretKey = 'LiuYaoApp_Unlock_Key_2026';
+const String _secretKey = 'LiuYaoAssistant-2026-KeyCode';
 
 const List<Map<String, String>> _features = [
   {'code': 'F005', 'name': '神煞详解', 'desc': '神煞含义详解与吉凶分析'},
