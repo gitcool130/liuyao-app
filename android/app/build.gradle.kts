@@ -17,7 +17,7 @@ android {
         applicationId = "com.bobo.liuyao_app"
         minSdk = 26
         targetSdk = flutter.targetSdkVersion
-        versionCode = 55
+        versionCode = 56
         versionName = "1.2.2"
 
         ndk {

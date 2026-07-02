@@ -105,56 +105,47 @@ class UpdateManager {
     // 保持CPU唤醒，防止锁屏后下载中断
     await WakelockPlus.enable();
 
-    // 重试下载（最多3次）
     try {
-    for (int retry = 0; retry < 3; retry++) {
-      if (retry > 0) await Future.delayed(const Duration(seconds: 2));
+      final existingBytes = file.existsSync() ? await file.length() : 0;
 
-      try {
-        final existingBytes = file.existsSync() ? await file.length() : 0;
-
-        if (existingBytes >= info.apkSize) {
-          return await _verifyAndSave(file.path, info);
-        }
-
-        final client = HttpClient();
-        client.connectionTimeout = const Duration(seconds: 10);
-        client.idleTimeout = const Duration(minutes: 10);
-
-        final request = await client.getUrl(Uri.parse(url));
-        if (existingBytes > 0) {
-          request.headers.set('Range', 'bytes=$existingBytes-');
-        }
-
-        final response = await request.close();
-
-        if (response.statusCode == 206) {
-          final sink = file.openWrite(mode: FileMode.append);
-          await response.pipe(sink);
-          final ok = await _verifyAndSave(file.path, info);
-          if (ok) return true;
-          // 校验失败，删除重试
-          if (file.existsSync()) await file.delete();
-        } else if (response.statusCode == 200) {
-          if (existingBytes > 0) await file.delete();
-          final sink = file.openWrite(mode: FileMode.write);
-          await response.pipe(sink);
-          final ok = await _verifyAndSave(file.path, info);
-          if (ok) return true;
-          if (file.existsSync()) await file.delete();
-        } else if (response.statusCode == 416) {
-          return await _verifyAndSave(file.path, info);
-        }
-      } catch (_) {
-        // 下载中断，重试
+      // 已有完整文件，直接校验
+      if (existingBytes >= info.apkSize) {
+        return await _verifyAndSave(file.path, info);
       }
-    }
 
-    return false;
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 15);
+      client.idleTimeout = const Duration(minutes: 10);
+
+      final request = await client.getUrl(Uri.parse(url));
+      if (existingBytes > 0) {
+        request.headers.set('Range', 'bytes=$existingBytes-');
+      }
+
+      final response = await request.close();
+
+      if (response.statusCode == 206) {
+        // 续传
+        final sink = file.openWrite(mode: FileMode.append);
+        await response.pipe(sink);
+        return await _verifyAndSave(file.path, info);
+      } else if (response.statusCode == 200) {
+        // 不支持续传，重新下载
+        if (existingBytes > 0) await file.delete();
+        final sink = file.openWrite(mode: FileMode.write);
+        await response.pipe(sink);
+        return await _verifyAndSave(file.path, info);
+      } else if (response.statusCode == 416) {
+        // 文件已完整
+        return await _verifyAndSave(file.path, info);
+      }
+    } catch (_) {
+      // 下载中断，保留已下载部分，下次继续
     } finally {
       _status = DownloadStatus.none;
       await WakelockPlus.disable();
     }
+    return false;
   }
 
   /// 下载成功后释放唤醒锁
