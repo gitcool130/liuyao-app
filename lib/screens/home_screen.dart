@@ -72,6 +72,48 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() => _unlockedFeatures = unlocked);
   }
 
+  void _checkUpdate() async {
+    final info = await FeatureLockService.checkUpdate();
+    if (!mounted || info == null) return;
+
+    final currentBuild = 34; // 应与version.dart一致
+    final serverBuild = info['buildNumber'] as int? ?? 0;
+    if (serverBuild <= currentBuild) return;
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(children: [
+          const Icon(Icons.system_update, color: Colors.blue),
+          const SizedBox(width: 8),
+          const Text('发现新版本'),
+        ]),
+        content: Text('v${info['version']} (构建${serverBuild})\n\n${info['description'] ?? ''}\n\n${info['forceUpdate'] == true ? '⚠️ 此版本为强制更新' : ''}'),
+        actions: [
+          if (info['forceUpdate'] != true)
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('稍后')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _downloadApk(info['url'] as String);
+            },
+            child: const Text('立即更新'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _downloadApk(String urlPath) {
+    final url = '${FeatureLockService.serverUrl}$urlPath';
+    // 启动系统浏览器下载或使用其他方式
+    // 简单的做法：使用 launchUrl
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('下载地址: $url'), duration: const Duration(seconds: 5)),
+    );
+  }
+
   void _navigateToManualInput() {
     final provider = Provider.of<DivinationProvider>(context, listen: false);
     provider.setDivinationTime(_divTime);

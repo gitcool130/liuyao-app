@@ -19,6 +19,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,6 +54,9 @@ class FeatureLockService {
     const p5 = '026';
     return '$p1$p2$p3$p4$p5';
   }
+
+  /// 服务器地址（在线验证+更新检查）
+  static String serverUrl = 'https://www.bobolovesu.cn';
 
   /// SharedPreferences 键名
   static const String _prefsPrefix = 'unlocked_features_';
@@ -149,6 +153,56 @@ class FeatureLockService {
   static Future<void> unlock(String featureCode, String expireDate) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('$_prefsPrefix$featureCode', expireDate);
+  }
+
+  /// 在线验证验证码（优先调用，失败则回退到本地验证）
+  static Future<({bool valid, String expireDate})> onlineVerify({
+    required String deviceId,
+    required String featureCode,
+    required String code,
+  }) async {
+    try {
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 5);
+      final request = await client.postUrl(Uri.parse('$serverUrl/api/verify_code'));
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({
+        'deviceId': deviceId,
+        'code': code,
+      }));
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        final body = await response.transform(utf8.decoder).join();
+        final json = jsonDecode(body) as Map<String, dynamic>;
+        if (json['success'] == true && json['data'] != null) {
+          final data = json['data'] as Map<String, dynamic>;
+          if (data['valid'] == true) {
+            return (valid: true, expireDate: data['expireDate'] as String);
+          }
+        }
+      }
+    } catch (_) {
+      // 网络错误，回退到本地验证
+    }
+    return (valid: false, expireDate: '');
+  }
+
+  /// 检查更新
+  static Future<Map<String, dynamic>?> checkUpdate() async {
+    try {
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 8);
+      final request = await client.getUrl(Uri.parse('$serverUrl/api/check_update'));
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        final body = await response.transform(utf8.decoder).join();
+        final json = jsonDecode(body) as Map<String, dynamic>;
+        if (json['success'] == true && json['data'] != null) {
+          return json['data'] as Map<String, dynamic>;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// 获取所有已解锁的功能
