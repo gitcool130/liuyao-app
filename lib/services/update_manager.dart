@@ -92,59 +92,61 @@ class UpdateManager {
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/liuyao-assistant.apk');
 
-    // 检查已有文件是否对应同一个版本，防止服务器升级后断点续传损坏文件
+    // 检查已有文件是否对应同一个版本
     final prefs = await SharedPreferences.getInstance();
     final savedBuild = prefs.getInt(_buildKey) ?? 0;
     if (savedBuild > 0 && savedBuild != info.buildNumber) {
-      // 服务器已升级，删除旧的部分文件
       if (file.existsSync()) await file.delete();
       await prefs.remove(_apkKey);
       await prefs.remove(_buildKey);
     }
 
-    try {
-      final existingBytes = file.existsSync() ? await file.length() : 0;
-      final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 30);
+    // 重试下载（最多3次）
+    for (int retry = 0; retry < 3; retry++) {
+      if (retry > 0) await Future.delayed(const Duration(seconds: 2));
 
-      // 有续传时先校验已有部分是否完整（查服务端APK大小）
-      if (existingBytes > 0) {
+      try {
+        final existingBytes = file.existsSync() ? await file.length() : 0;
+
         if (existingBytes >= info.apkSize) {
-          // 已有文件大小 ≥ 预期大小，直接校验MD5
           return await _verifyAndSave(file.path, info);
         }
-        // 否则发起续传请求
-      }
 
-      final request = await client.getUrl(Uri.parse(url));
-      if (existingBytes > 0) {
-        request.headers.set('Range', 'bytes=$existingBytes-');
-      }
+        final client = HttpClient();
+        client.connectionTimeout = const Duration(seconds: 15);
+        // 总超时：5分钟（87MB/3Mbps ≈ 4分钟，给足余量）
+        client.idleTimeout = const Duration(minutes: 8);
 
-      final response = await request.close();
-
-      // 处理续传响应：206=续传成功，200=服务器不支持续传（重新下载）
-      if (response.statusCode == 206) {
-        // 续传模式，追加写入
-        final sink = file.openWrite(mode: FileMode.append);
-        await response.pipe(sink);
-        return await _verifyAndSave(file.path, info);
-      } else if (response.statusCode == 200) {
-        // 服务器不支持续传或range无效，重新下载
+        final request = await client.getUrl(Uri.parse(url));
         if (existingBytes > 0) {
-          // 删除不完整的文件，重新下载
-          await file.delete();
+          request.headers.set('Range', 'bytes=$existingBytes-');
         }
-        final sink = file.openWrite(mode: FileMode.write);
-        await response.pipe(sink);
-        return await _verifyAndSave(file.path, info);
-      } else if (response.statusCode == 416) {
-        // Range超出范围，文件已完整
-        return await _verifyAndSave(file.path, info);
+
+        final response = await request.close();
+
+        if (response.statusCode == 206) {
+          final sink = file.openWrite(mode: FileMode.append);
+          await response.pipe(sink);
+          final ok = await _verifyAndSave(file.path, info);
+          if (ok) return true;
+          // 校验失败，删除重试
+          if (file.existsSync()) await file.delete();
+        } else if (response.statusCode == 200) {
+          if (existingBytes > 0) await file.delete();
+          final sink = file.openWrite(mode: FileMode.write);
+          await response.pipe(sink);
+          final ok = await _verifyAndSave(file.path, info);
+          if (ok) return true;
+          if (file.existsSync()) await file.delete();
+        } else if (response.statusCode == 416) {
+          return await _verifyAndSave(file.path, info);
+        }
+      } catch (_) {
+        // 下载中断，重试
       }
-    } catch (_) {
-      _status = DownloadStatus.none;
     }
+
+    _status = DownloadStatus.none;
     return false;
   }
 
