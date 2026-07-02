@@ -117,6 +117,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 检查更新
   void _checkUpdate() async {
+    // 延迟1秒让UI先加载完成，同时让用户感知到确实在联网检查
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
     final info = await UpdateManager.checkUpdate(appBuildNumber);
     if (!mounted || info == null) return;
 
