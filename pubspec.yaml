@@ -45,7 +45,6 @@ dependencies:
   
   # 图像识别功能依赖
   image_picker: ^1.1.2
-  http: ^1.2.0
 
   # OCR文字识别（本地）- 使用专用包减小体积
   # google_mlkit_text_recognition 包含中文识别

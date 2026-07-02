@@ -10,7 +10,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 
-// 密钥分段，与 app 端保持一致
 const String _secretKey = 'LiuYaoApp_Unlock_Key_2026';
 
 const List<Map<String, String>> _features = [

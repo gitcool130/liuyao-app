@@ -3,7 +3,6 @@
 
 import 'dart:io';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/image_recognition_result.dart';
 import 'paipan_parser.dart';
 
@@ -43,14 +42,6 @@ class OCRPaipanService {
       // 获取识别的文字
       final rawText = recognizedText.text;
 
-      // Debug: 打印原始OCR文本到日志
-      print('========== OCR原始文本 START ==========');
-      print(rawText);
-      print('========== OCR原始文本 END ==========');
-
-      // Debug: 保存原始文本到文件
-      await _saveRawTextToFile(rawText);
-
       if (rawText.isEmpty) {
         return ImageRecognitionResult.failure('未能识别到任何文字');
       }
@@ -62,30 +53,7 @@ class OCRPaipanService {
       return result;
 
     } catch (e) {
-      print('OCR识别错误: $e');
       return ImageRecognitionResult.failure('识别失败: $e');
-    }
-  }
-
-  /// 保存原始OCR文本到文件（用于调试）
-  Future<void> _saveRawTextToFile(String rawText) async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/ocr_raw_text.txt');
-      await file.writeAsString(rawText);
-      print('OCR原始文本已保存到: ${file.path}');
-    } catch (e) {
-      print('保存OCR文本失败: $e');
-    }
-  }
-
-  /// 获取保存的原始OCR文本文件路径
-  Future<String?> getRawTextFilePath() async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      return '${directory.path}/ocr_raw_text.txt';
-    } catch (e) {
-      return null;
     }
   }
 

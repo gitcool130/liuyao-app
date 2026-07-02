@@ -45,17 +45,12 @@ const List<LockedFeature> lockedFeatures = [
 
 /// 功能锁服务
 class FeatureLockService {
-  /// HMAC密钥（拆分为多段，防止直接搜索）
-  /// 实际密钥: LiuYaoApp_Unlock_Key_2026
   static String get _secretKey {
-    // 拆分为6段，反编译后无法直接 grep 到完整密钥
     const p1 = 'LiuYao';
     const p2 = 'App_U';
     const p3 = 'nlock';
     const p4 = '_Key_2';
     const p5 = '026';
-    const p6 = 'HMACSHA';
-    // 实际使用 p1-p5，p6 为干扰段
     return '$p1$p2$p3$p4$p5';
   }
 
