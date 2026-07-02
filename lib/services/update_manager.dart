@@ -89,8 +89,18 @@ class UpdateManager {
     _progress = 0;
 
     final url = '${FeatureLockService.serverUrl}${info.url}';
-    final dir = await getTemporaryDirectory();
+    final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/liuyao-assistant.apk');
+
+    // 检查已有文件是否对应同一个版本，防止服务器升级后断点续传损坏文件
+    final prefs = await SharedPreferences.getInstance();
+    final savedBuild = prefs.getInt(_buildKey) ?? 0;
+    if (savedBuild > 0 && savedBuild != info.buildNumber) {
+      // 服务器已升级，删除旧的部分文件
+      if (file.existsSync()) await file.delete();
+      await prefs.remove(_apkKey);
+      await prefs.remove(_buildKey);
+    }
 
     try {
       final existingBytes = file.existsSync() ? await file.length() : 0;
