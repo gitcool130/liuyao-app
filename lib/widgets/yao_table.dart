@@ -409,7 +409,7 @@ class _YaoSymbolCell extends StatelessWidget {
                 ),
               if (isDong)
                 TextSpan(
-                  text: '○',
+                  text: symbol.contains('○') ? '○' : '✕',
                   style: TextStyle(fontSize: symbolFontSize, color: dongColor, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
                 ),
             ],
