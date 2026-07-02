@@ -17,8 +17,8 @@ android {
         applicationId = "com.bobo.liuyao_app"
         minSdk = 26
         targetSdk = flutter.targetSdkVersion
-        versionCode = 39
-        versionName = "1.2.1"
+        versionCode = 40
+        versionName = "1.2.2"
 
         ndk {
             abiFilters += listOf("arm64-v8a")

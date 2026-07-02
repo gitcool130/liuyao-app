@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _divTime = DateTime.now();
     _loadUnlocked();
     _updateGanZhi();
+    _checkUpdate();
   }
 
   void _updateGanZhi() {
@@ -107,10 +108,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _downloadApk(String urlPath) {
     final url = '${FeatureLockService.serverUrl}$urlPath';
-    // 启动系统浏览器下载或使用其他方式
-    // 简单的做法：使用 launchUrl
+    Clipboard.setData(ClipboardData(text: url));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('下载地址: $url'), duration: const Duration(seconds: 5)),
+      SnackBar(content: Text('下载链接已复制：$url'), duration: const Duration(seconds: 8)),
     );
   }
 
