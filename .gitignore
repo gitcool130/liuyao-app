@@ -49,6 +49,12 @@ app.*.map.json
 .env
 .env.*
 
+# 管理员工具构建产物
+admin_tool/build/
+admin_tool/.dart_tool/
+admin_tool/android/.gradle/
+admin_tool/ios/build/
+
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
