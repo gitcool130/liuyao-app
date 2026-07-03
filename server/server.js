@@ -190,22 +190,6 @@ app.post('/api/verify_code', (req, res) => {
     }
   }
 
-  
-  // 4. 尝试查询 used_codes 表（兼容随机生成的审批码）
-  try {
-    const codeRecord = db.prepare('SELECT features, expire_date FROM used_codes WHERE code = ?').get(code);
-    if (codeRecord) {
-      const expireDt = new Date(codeRecord.expire_date.substring(0,4), 
-        parseInt(codeRecord.expire_date.substring(4,6))-1,
-        parseInt(codeRecord.expire_date.substring(6,8))+1);
-      if (new Date() < expireDt) {
-        const matchedFeatures = JSON.parse(codeRecord.features);
-        recordUnlock(deviceHash, matchedFeatures, codeRecord.expire_date);
-        return res.json({ success: true, data: { valid: true, features: matchedFeatures, expireDate: codeRecord.expire_date } });
-      }
-    }
-  } catch(_) {}
-
   res.json({ success: true, data: { valid: false, message: '验证码无效' } });
 });
 
@@ -338,7 +322,6 @@ app.post('/api/approve_request', (req, res) => {
 
   // 记录设备解锁
   recordUnlock(request.device_hash, features, expireDate);
-  try { saveUsedCode(randomCode, null, features, expireDate); } catch(_){}
 
   res.json({ success: true, data: { 
     code: randomCode, 
@@ -389,6 +372,34 @@ function recordUnlock(deviceHash, features, expireDate) {
     'INSERT OR REPLACE INTO device_unlocks (device_hash, features, expire_date, unlocked_at) VALUES (?, ?, ?, datetime(\'now\'))'
   ).run(deviceHash, JSON.stringify(features), expireDate);
 }
+
+// ---- 9. 更新配置（adminKey / secretKey）----
+app.post('/api/update_config', (req, res) => {
+  const { adminKey, currentPassword, newAdminKey, newSecretKey } = req.body;
+  if (adminKey !== CONFIG.adminKey) {
+    return res.status(403).json({ success: false, message: '管理员密钥错误' });
+  }
+  if (currentPassword !== CONFIG.adminKey) {
+    return res.json({ success: false, message: '当前密钥验证失败' });
+  }
+
+  const changes = {};
+  if (newAdminKey) {
+    if (newAdminKey.length < 8) return res.json({ success: false, message: '新管理员密钥至少8位' });
+    db.prepare('INSERT OR REPLACE INTO app_config (key, value) VALUES (?, ?)').run('adminKey', newAdminKey);
+    CONFIG.adminKey = newAdminKey;
+    changes.adminKeyChanged = true;
+  }
+  if (newSecretKey) {
+    if (newSecretKey.length < 8) return res.json({ success: false, message: '新解锁码密钥至少8位' });
+    db.prepare('INSERT OR REPLACE INTO app_config (key, value) VALUES (?, ?)').run('secretKey', newSecretKey);
+    CONFIG.secretKey = newSecretKey;
+    changes.secretKeyChanged = true;
+  }
+
+  res.json({ success: true, message: '配置已更新，即时生效', data: changes });
+});
+
 
 // ==================== 静态文件 ====================
 
