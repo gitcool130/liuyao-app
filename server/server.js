@@ -30,9 +30,9 @@ const CONFIG = {
 // ==================== 当前版本 ====================
 const CURRENT_VERSION = {
   version: '1.2.3',
-  buildNumber: 62,
+  buildNumber: 65,
   url: '/apk/liuyao-assistant.apk',
-  md5: '6fb8f91d8c82cce1392cc1fef8990c01',
+  md5: '803c80d9d28ce4454f1d9be610beeb98',
   description: '解锁申请流程 + SQLite存储',
   forceUpdate: false,
 };
