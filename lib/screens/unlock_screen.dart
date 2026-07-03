@@ -21,6 +21,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
   final _remarkController = TextEditingController();
   bool _verifying = false;
   bool _submitting = false;
+  bool _requestSubmitted = false;
   List<String> _unlockedFeatures = [];
   String? _deviceId;
   String? _message;
@@ -87,9 +88,17 @@ class _UnlockScreenState extends State<UnlockScreen> {
     if (mounted) {
       if (result['success'] == true) {
         final data = (result['data'] as Map<String, dynamic>?) ?? {};
-        setState(() => _message = '✅ ${data['message'] ?? '申请已提交'}');
+        final msg = data['message'] ?? '申请已提交';
+        setState(() { _requestSubmitted = true; _message = '✅ $msg'; });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('✅ $msg'),
+          duration: const Duration(seconds: 4),
+        ));
       } else {
-        setState(() => _message = '❌ ${result['message'] ?? '提交失败'}');
+        setState(() => _message = '❌ ${result['message'] ?? '提交失败，请稍后重试'}');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('❌ ${result['message'] ?? '提交失败'}'),
+        ));
       }
     }
   }
@@ -195,15 +204,27 @@ class _UnlockScreenState extends State<UnlockScreen> {
 
           // 提交解锁申请
           Card(
-              color: Colors.blue.shade50,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('提交解锁申请', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1565C0))),
-                    const SizedBox(height: 4),
-                    const Text('提交后管理员审批通过将自动解锁', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            color: _requestSubmitted ? Colors.green.shade50 : Colors.blue.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(_requestSubmitted ? Icons.check_circle : Icons.send,
+                        size: 18, color: _requestSubmitted ? Colors.green : const Color(0xFF1565C0)),
+                    const SizedBox(width: 6),
+                    Text(_requestSubmitted ? '申请已提交' : '提交解锁申请',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
+                            color: _requestSubmitted ? Colors.green : const Color(0xFF1565C0))),
+                  ]),
+                  const SizedBox(height: 4),
+                  Text(
+                    _requestSubmitted
+                        ? '管理员审批通过后将自动解锁，请耐心等待'
+                        : '提交后管理员审批通过将自动解锁',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  if (!_requestSubmitted) ...[
                     const SizedBox(height: 8),
                     TextField(
                       controller: _remarkController,
@@ -230,9 +251,10 @@ class _UnlockScreenState extends State<UnlockScreen> {
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
             ),
+          ),
 
           const SizedBox(height: 16),
 
