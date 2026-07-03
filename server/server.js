@@ -16,6 +16,14 @@ const app = express();
 
 app.use(express.json());
 
+// CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
 // ==================== 配置 ====================
 const CONFIG = {
   port: process.env.PORT || 3456,
@@ -270,7 +278,7 @@ app.post('/api/submit_request', (req, res) => {
     
     res.json({ success: true, data: { requestId: result.lastInsertRowid, message: '申请已提交，请等待管理员审批' } });
   } catch (e) {
-    res.json({ success: false, message: '提交失败：' + e.message });
+    res.json({ success: false, message: '提交失败，请稍后重试' });
   }
 });
 
