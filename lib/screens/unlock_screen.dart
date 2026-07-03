@@ -193,9 +193,8 @@ class _UnlockScreenState extends State<UnlockScreen> {
 
           const SizedBox(height: 16),
 
-          // 提交解锁申请（仅未解锁时显示）
-          if (!_unlockedFeatures.contains('F005'))
-            Card(
+          // 提交解锁申请
+          Card(
               color: Colors.blue.shade50,
               child: Padding(
                 padding: const EdgeInsets.all(12),
