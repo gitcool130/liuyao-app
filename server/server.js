@@ -16,8 +16,6 @@ const app = express();
 
 app.use(express.json());
 
-});
-
 // ==================== 配置 ====================
 const CONFIG = {
   port: process.env.PORT || 3456,
@@ -34,7 +32,7 @@ const CURRENT_VERSION = {
   version: '1.2.3',
   buildNumber: 62,
   url: '/apk/liuyao-assistant.apk',
-  md5: 'fa7df99e790694cb172b48b7b661d129',
+  md5: '6fb8f91d8c82cce1392cc1fef8990c01',
   description: '解锁申请流程 + SQLite存储',
   forceUpdate: false,
 };
