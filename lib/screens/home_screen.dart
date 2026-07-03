@@ -40,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _updateGanZhi();
     _checkPendingInstall();
     _checkUpdate();
+    _checkAutoUnlock();
   }
 
   void _updateGanZhi() {
@@ -145,6 +146,33 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  /// 自动检查解锁申请状态（审批通过后自动解锁）
+  void _checkAutoUnlock() async {
+    if (_unlockedFeatures.contains('F005')) return;
+    final deviceId = await FeatureLockService.getDeviceId();
+    if (deviceId.isEmpty) return;
+
+    final result = await FeatureLockService.checkRequestStatus(deviceId);
+    if (result['success'] == true && result['data'] != null) {
+      final data = result['data'] as Map<String, dynamic>;
+      if (data['status'] == 'approved' && data['code'] != null) {
+        final code = data['code'] as String;
+        final verifyResult = await FeatureLockService.verifyCode(deviceId: deviceId, code: code);
+        if (verifyResult.valid && mounted) {
+          for (final feature in lockedFeatures) {
+            await FeatureLockService.unlock(feature.code, verifyResult.expireDate);
+          }
+          setState(() => _unlockedFeatures = lockedFeatures.map((f) => f.code).toList());
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('✅ 解锁申请已通过，功能已自动解锁！')),
+            );
+          }
+        }
+      }
+    }
   }
 
   /// 下载更新（底部进度条显示）
