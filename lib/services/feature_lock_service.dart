@@ -117,6 +117,41 @@ class FeatureLockService {
     return unlocked;
   }
 
+  /// 提交解锁申请
+  static Future<Map<String, dynamic>> submitRequest({
+    required String deviceId,
+    String remark = '',
+  }) async {
+    try {
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 10);
+      final request = await client.postUrl(Uri.parse('$serverUrl/api/submit_request'));
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({'deviceId': deviceId, 'remark': remark}));
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        final body = await response.transform(utf8.decoder).join();
+        return jsonDecode(body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return {'success': false, 'message': '网络错误'};
+  }
+
+  /// 检查申请状态
+  static Future<Map<String, dynamic>> checkRequestStatus(String deviceId) async {
+    try {
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 8);
+      final request = await client.getUrl(Uri.parse('$serverUrl/api/check_request_status?deviceId=${Uri.encodeQueryComponent(deviceId)}'));
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        final body = await response.transform(utf8.decoder).join();
+        return jsonDecode(body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return {'success': false};
+  }
+
   /// 检查更新
   static Future<Map<String, dynamic>?> checkUpdate() async {
     try {

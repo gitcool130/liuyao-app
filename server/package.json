@@ -1,0 +1,13 @@
+{
+  "name": "liuyao-server",
+  "version": "2.0.0",
+  "description": "\u516d\u723b\u52a9\u624b - \u66f4\u65b0\u5206\u53d1 + \u9a8c\u8bc1 + \u89e3\u9501\u7533\u8bf7",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "better-sqlite3": "^11.0.0"
+  }
+}
