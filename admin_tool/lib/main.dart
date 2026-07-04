@@ -68,7 +68,7 @@ class _AdminToolScreenState extends State<AdminToolScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -91,6 +91,7 @@ class _AdminToolScreenState extends State<AdminToolScreen>
             Tab(text: '手动生成', icon: Icon(Icons.vpn_key, size: 18)),
             Tab(text: '待审批', icon: Icon(Icons.pending_actions, size: 18)),
             Tab(text: '配置', icon: Icon(Icons.settings, size: 18)),
+            Tab(text: '已解锁', icon: Icon(Icons.check_circle, size: 18)),
           ],
         ),
       ),
@@ -100,6 +101,7 @@ class _AdminToolScreenState extends State<AdminToolScreen>
           _ManualGenerateTab(),
           _PendingRequestsTab(onApproved: () => _tabCtrl.animateTo(0)),
           _ConfigTab(),
+          _UnlockedListTab(),
         ],
       ),
     );
@@ -461,6 +463,73 @@ class _ConfigTabState extends State<_ConfigTab> {
         if (_msg != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_msg!, style: const TextStyle(fontSize: 13))),
       ],))),
     ]);
+  }
+}
+
+// ==================== Tab 4: 已解锁列表 ====================
+
+class _UnlockedListTab extends StatefulWidget {
+  @override
+  State<_UnlockedListTab> createState() => _UnlockedListTabState();
+}
+
+class _UnlockedListTabState extends State<_UnlockedListTab> {
+  List<Map<String, dynamic>> _records = [];
+  bool _loading = false;
+
+  @override
+  void initState() { super.initState(); _fetch(); }
+
+  Future<void> _fetch() async {
+    setState(() => _loading = true);
+    try {
+      final c = HttpClient();
+      final r = await c.getUrl(Uri.parse('$_serverUrl/api/unlocked_devices?adminKey=$_adminKey'));
+      final resp = await r.close();
+      final body = await resp.transform(utf8.decoder).join();
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      if (json['success'] == true && json['data'] != null) {
+        setState(() => _records = (json['data'] as List).cast<Map<String, dynamic>>());
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('获取失败: $e')));
+    }
+    setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: _fetch,
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _records.isEmpty
+              ? ListView(children: const [SizedBox(height: 200,
+                  child: Center(child: Text('暂无已解锁设备', style: TextStyle(color: Colors.grey, fontSize: 16))))])
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: _records.length,
+                  itemBuilder: (ctx, i) => _buildCard(_records[i]),
+                ),
+    );
+  }
+
+  Widget _buildCard(Map<String, dynamic> r) {
+    final features = (r['features'] as List).join(', ');
+    final remark = r['remark'] as String? ?? '';
+    return Card(margin: const EdgeInsets.only(bottom: 8), child: Padding(
+      padding: const EdgeInsets.all(10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(r['deviceHash'] ?? '', style: const TextStyle(fontSize: 11, fontFamily: 'monospace'), overflow: TextOverflow.ellipsis),
+        if (remark.isNotEmpty) Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text('备注: $remark', style: TextStyle(fontSize: 12, color: Colors.blue.shade700)),
+        ),
+        Text('功能: $features', style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+        Text('IP: ${r['applicantIp'] ?? ''}  过期: ${r['expireDate'] ?? ''}',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+      ]),
+    ));
   }
 }
 
