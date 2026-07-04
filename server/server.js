@@ -395,21 +395,21 @@ app.get('/api/unlocked_devices', (req, res) => {
   const { adminKey } = req.query;
   if (adminKey !== CONFIG.adminKey) return res.status(403).json({ success: false, message: '密钥错误' });
 
-  const rows = db.prepare(\`
-    SELECT d.device_hash, d.features, d.expire_date, d.unlocked_at,
-           r.remark_encrypted, r.applicant_ip
-    FROM device_unlocks d
-    LEFT JOIN unlock_requests r ON r.device_hash = d.device_hash AND r.status = 'approved'
-    ORDER BY d.unlocked_at DESC LIMIT 200
-  \`).all();
-  res.json({ success: true, data: rows.map(r => ({
-    deviceHash: r.device_hash,
-    features: JSON.parse(r.features),
-    expireDate: r.expire_date,
-    unlockedAt: r.unlocked_at,
-    remark: r.remark_encrypted ? decrypt(r.remark_encrypted) : '',
-    applicantIp: r.applicant_ip || '',
-  })) });
+  const sql = "SELECT d.device_hash, d.features, d.expire_date, d.unlocked_at, " +
+    "r.remark_encrypted, r.applicant_ip FROM device_unlocks d " +
+    "LEFT JOIN unlock_requests r ON r.device_hash = d.device_hash AND r.status = 'approved' " +
+    "ORDER BY d.unlocked_at DESC LIMIT 200";
+  const rows = db.prepare(sql).all();
+  res.json({ success: true, data: rows.map(function(r) {
+    return {
+      deviceHash: r.device_hash,
+      features: JSON.parse(r.features),
+      expireDate: r.expire_date,
+      unlockedAt: r.unlocked_at,
+      remark: r.remark_encrypted ? decrypt(r.remark_encrypted) : '',
+      applicantIp: r.applicant_ip || '',
+    };
+  }) });
 });
 
 // ---- 9. 更新配置（adminKey / secretKey）----
