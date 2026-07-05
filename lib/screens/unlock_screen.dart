@@ -25,6 +25,9 @@ class _UnlockScreenState extends State<UnlockScreen> {
   List<String> _unlockedFeatures = [];
   String? _deviceId;
   String? _message;
+  bool _showDevTools = false;
+  int _devToolsTapCount = 0;
+  static const int _devToolsTapThreshold = 8;
 
   @override
   void initState() {
@@ -42,9 +45,11 @@ class _UnlockScreenState extends State<UnlockScreen> {
   Future<void> _loadState() async {
     final deviceId = await FeatureLockService.getDeviceId();
     final unlocked = await FeatureLockService.getUnlockedFeatures();
+    final settings = context.read<SettingsProvider>().settings;
     setState(() {
       _deviceId = deviceId;
       _unlockedFeatures = unlocked;
+      _showDevTools = settings.showUnlockDevTools;
     });
     // 启动时自动检查申请状态
     if (deviceId != null && !unlocked.contains('F005')) {
@@ -143,6 +148,27 @@ class _UnlockScreenState extends State<UnlockScreen> {
     setState(() => _verifying = false);
   }
 
+  /// 切换开发者输入显示
+  Future<void> _toggleDevTools() async {
+    setState(() { _devToolsTapCount++; });
+    if (_devToolsTapCount < _devToolsTapThreshold) return;
+
+    final newValue = !_showDevTools;
+    final settingsProvider = context.read<SettingsProvider>();
+    final newSettings = settingsProvider.settings.copyWith(showUnlockDevTools: newValue);
+    await newSettings.save();
+    settingsProvider.update(newSettings);
+
+    setState(() {
+      _showDevTools = newValue;
+      _devToolsTapCount = 0;
+      _message = newValue ? '已显示设备ID和验证码输入' : '已隐藏设备ID和验证码输入';
+    });
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _message = null);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,7 +179,8 @@ class _UnlockScreenState extends State<UnlockScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           // 设备ID（带复制按钮）
-          Card(
+          if (_showDevTools)
+            Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -214,9 +241,12 @@ class _UnlockScreenState extends State<UnlockScreen> {
                     Icon(_requestSubmitted ? Icons.check_circle : Icons.send,
                         size: 18, color: _requestSubmitted ? Colors.green : const Color(0xFF1565C0)),
                     const SizedBox(width: 6),
-                    Text(_requestSubmitted ? '申请已提交' : '提交解锁申请',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
-                            color: _requestSubmitted ? Colors.green : const Color(0xFF1565C0))),
+                    GestureDetector(
+                      onTap: _toggleDevTools,
+                      child: Text(_requestSubmitted ? '申请已提交' : '提交解锁申请',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
+                              color: _requestSubmitted ? Colors.green : const Color(0xFF1565C0))),
+                    ),
                   ]),
                   const SizedBox(height: 4),
                   Text(
@@ -259,7 +289,8 @@ class _UnlockScreenState extends State<UnlockScreen> {
           const SizedBox(height: 16),
 
           // 验证码输入（离线兜底）
-          Card(
+          if (_showDevTools)
+            Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(

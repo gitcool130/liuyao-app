@@ -7,7 +7,7 @@ import 'constants.dart';
 
 /// 纳甲装卦器
 class NajiaConfig {
-  /// 为六爻分配纳甲地支
+  /// 为六爻分配纳甲地支和天干
   /// 根据内卦和外卦编号查表
   /// 八卦纳支表是六个爻的地支，内卦用前三个，外卦用后三个
   static void assignDiZhi(List<YaoLine> yaoLines, int innerGuaId, int outerGuaId) {
@@ -26,10 +26,16 @@ class NajiaConfig {
       outerDiZhi[5], // 上爻
     ];
 
-    // 为每个爻分配地支和五行
+    // 内卦天干与外卦天干
+    String innerGan = getBaGuaTianGan(innerGuaId, false);
+    String outerGan = getBaGuaTianGan(outerGuaId, true);
+
+    // 为每个爻分配天干、地支和五行
     for (int i = 0; i < 6; i++) {
       String zhi = allDiZhi[i];
+      String gan = i < 3 ? innerGan : outerGan;
       yaoLines[i] = yaoLines[i].copyWith(
+        tianGan: gan,
         ganZhi: zhi,
         wuXing: diZhiWuXing[zhi] ?? '',
       );
@@ -52,9 +58,14 @@ class NajiaConfig {
       outerDiZhi[5],
     ];
 
+    // 变卦的天干与地支配置
+    String innerGan = getBaGuaTianGan(bianInnerGuaId, false);
+    String outerGan = getBaGuaTianGan(bianOuterGuaId, true);
+
     // 为所有爻分配变爻信息（动爻阴阳互换，静爻保持不变）
     for (int i = 0; i < 6; i++) {
       String zhi = allDiZhi[i];
+      String gan = i < 3 ? innerGan : outerGan;
       // 变爻类型：动爻阴阳互换，静爻保持不变
       YaoType bianYaoType;
       if (yaoLines[i].yaoType == YaoType.laoYang) {
@@ -67,6 +78,7 @@ class NajiaConfig {
 
       yaoLines[i] = yaoLines[i].copyWith(
         bianYaoType: bianYaoType,
+        bianTianGan: gan,
         bianGanZhi: zhi,
         bianWuXing: diZhiWuXing[zhi] ?? '',
       );

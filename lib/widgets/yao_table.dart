@@ -49,8 +49,8 @@ class YaoTable extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final isLandscape = screenWidth > screenHeight;
 
-    // 横屏时本卦列加宽，拉开与变卦的间距
-    final benGuaWidth = isLandscape ? 100.0 : 80.0;
+    // 本卦爻象栏宽度（收窄）
+    final benGuaWidth = isLandscape ? 80.0 : 60.0;
 
     // 从上爻(位置6)到初爻(位置1)排序
     final sortedLines = yaoLines.toList()
@@ -83,8 +83,8 @@ class YaoTable extends StatelessWidget {
   }
 
   Widget _buildHeader(double benGuaWidth) {
-    // 合并宽度：六亲(36) + 支(36/50) + 世应(24) + 本卦爻象(benGuaWidth)
-    final benGuaHeaderWidth = 36 + (showQuantification ? 50 : 36) + 24 + benGuaWidth;
+    // 卦名合并宽度：六亲(36) + 干支(44/58) + 世应(24) + 本卦爻象(benGuaWidth)
+    final guaNameHeaderWidth = 36 + (showQuantification ? 58 : 44) + 24 + benGuaWidth;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 1),
@@ -93,11 +93,11 @@ class YaoTable extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const _HeaderCell('神', width: 28),
+          const _HeaderCell('六神', width: 36),
           const _HeaderCell('伏', width: 36),
-          // 本卦名称（占六亲+支+世应+爻象的合并空间，居中显示）
+          // 本卦名称（占六亲+支+世应+爻象的合并空间，左对齐显示）
           SizedBox(
-            width: benGuaHeaderWidth,
+            width: guaNameHeaderWidth,
             child: Text(
               '${gongName != null ? '$gongName：' : ''}${benGuaLabel != null && benGuaLabel!.isNotEmpty ? '$benGuaName($benGuaLabel)' : benGuaName}',
               style: const TextStyle(
@@ -105,12 +105,12 @@ class YaoTable extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF8B4513),
               ),
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          // 变卦名称（占变卦列，居中显示）
+          // 变卦名称（占变卦列，左对齐显示）
           if (hasDongYao && bianGuaName != null)
             SizedBox(
               width: 130,
@@ -121,7 +121,7 @@ class YaoTable extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF8B4513),
                 ),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -140,9 +140,10 @@ class YaoTable extends StatelessWidget {
     // 六亲显示完整两个字（如"官鬼")
     final liuQinDisplay = yao.liuQin ?? '';
 
-    // 地支+五行（紧凑显示，不留空）
+    // 地支+五行（紧凑显示，不留空），含纳甲天干：天干+地支+五行
     final ganZhiDisplay = yao.ganZhi ?? '';
-    final zhiWuXing = ganZhiDisplay + (yao.wuXing ?? '');
+    final tianGanDisplay = yao.tianGan ?? '';
+    final zhiWuXing = '$tianGanDisplay$ganZhiDisplay${yao.wuXing ?? ''}';
 
     // 获取量化值（按位置索引匹配，避免重复地支匹配错误）
     QuantificationResult? quantResult;
@@ -170,10 +171,10 @@ class YaoTable extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // 六神（取第一个字）
+          // 六神（完整两个字显示）
           _YaoCell(
-            (yao.liuShen?.isNotEmpty ?? false) ? yao.liuShen![0] : '',
-            width: 28,
+            yao.liuShen ?? '',
+            width: 36,
           ),
 
           // 伏神（六亲首字+地支）
@@ -183,7 +184,6 @@ class YaoTable extends StatelessWidget {
             color: yao.fuShen != null ? Colors.blue.shade700 : null,
           ),
 
-          // 六亲（完整两个字）
           _YaoCell(liuQinDisplay, width: 36),
 
           // 地支+五行（支持量化显示）
@@ -231,11 +231,11 @@ class YaoTable extends StatelessWidget {
       }
     }
 
-    // 五行颜色映射
+    // 五行颜色映射（天干+地支+五行，取最后一个字作为五行）
     final wuXingColor = isXunKong ? null : AppSettings.wuXingColors[zhiWuXing.length > 1 ? zhiWuXing.substring(zhiWuXing.length - 1) : ''];
 
     final zhiWidget = SizedBox(
-      width: showQuantification ? 50 : 36,
+      width: showQuantification ? 58 : 44,
       child: FittedBox(
         fit: BoxFit.scaleDown,
         alignment: Alignment.centerLeft,
@@ -452,18 +452,21 @@ class _BianYaoCell extends StatelessWidget {
       symbol = '';
     }
 
-    // 变卦六亲+地支五行（如"兄寅木"）
+    // 变卦六亲+纳甲天干+地支五行（如"兄甲寅木"）
     String bianInfo = '';
     if (yao.bianLiuQin != null && yao.bianLiuQin!.isNotEmpty) {
       bianInfo = yao.bianLiuQin!;
+      if (yao.bianTianGan != null) {
+        bianInfo += yao.bianTianGan!;
+      }
       if (yao.bianGanZhi != null) {
         bianInfo += yao.bianGanZhi!;
         if (yao.bianWuXing != null) {
           bianInfo += yao.bianWuXing!;
         }
       }
-    } else if (yao.bianGanZhi != null) {
-      bianInfo = yao.bianGanZhi!;
+    } else if (yao.bianTianGan != null || yao.bianGanZhi != null) {
+      bianInfo = (yao.bianTianGan ?? '') + (yao.bianGanZhi ?? '');
       if (yao.bianWuXing != null) {
         bianInfo += yao.bianWuXing!;
       }

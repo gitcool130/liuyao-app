@@ -14,7 +14,6 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../algorithms/lunar_calendar.dart';
 import '../algorithms/shouxing_calendar.dart';
-import '../algorithms/shensha_calculator.dart';
 import '../algorithms/xunkong_calculator.dart';
 import '../models/shensha_result.dart';
 import '../providers/settings_provider.dart';
@@ -933,20 +932,9 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
-  /// 确保神煞包含全部16项（旧数据库记录可能缺少新增字段）
+  /// 获取神煞结果
   ShenshaResult _ensureFullShensha(DivinationRecord record) {
-    final shensha = record.shensha;
-    // 检查是否有新增字段缺失（任何一项为空即可触发重算）
-    if (shensha.zaiSha.isEmpty && shensha.wangShen.isEmpty &&
-        shensha.guChen.isEmpty && shensha.guaSu.isEmpty) {
-      return ShenShaCalculator.calculate(
-        dayGan: record.dayGz.isNotEmpty ? record.dayGz[0] : '',
-        dayZhi: record.dayGz.length > 1 ? record.dayGz[1] : '',
-        yearZhi: record.yearGz.length > 1 ? record.yearGz[1] : '',
-        monthZhi: record.monthGz.length > 1 ? record.monthGz[1] : '',
-      );
-    }
-    return shensha;
+    return record.shensha;
   }
 
   /// 天干五行映射

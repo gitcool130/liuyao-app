@@ -1,10 +1,8 @@
 /// 神煞详解页面
-/// 16项神煞的详细说明与用法
+/// 12项神煞的详细说明与用法
 library;
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/settings_provider.dart';
 
 /// 神煞详解内容
 class ShenshaDetail {
@@ -27,15 +25,15 @@ class ShenshaDetail {
 
 const List<ShenshaDetail> shenshaDetails = [
   ShenshaDetail(
-    name: '天乙贵人',
+    name: '贵人',
     starName: '天乙星',
     meaning: '最吉之神，主贵人相助、遇难呈祥。天乙乃是紫微垣中一星，主贵人、福禄。',
     usage: '天乙贵人为六爻中最重要的吉神之一。当日辰或月建临天乙贵人时，代表有贵人暗中相助。'
         '用神临天乙贵人，主事情有人帮衬，顺遂吉祥。世爻临天乙贵人，主自身有贵人缘。'
         '天乙贵人临官鬼，主贵人为官宦之人；临妻财，主贵人为富商；临子孙，主贵人为晚辈或僧道。'
         '天乙贵人逢空亡，贵人无力或贵人不在；逢冲，贵人变动。',
-    condition: '以日干查之。甲戊庚日见丑未，乙己日见申子，丙丁日见亥酉，'
-        '辛日见寅午，壬癸日见卯巳。',
+    condition: '以日干查之。甲戊日见丑未，乙己日见申子，丙丁日见亥酉，'
+        '庚辛日见寅午，壬癸日见卯巳。',
     effect: '诸事遇之皆吉，主有人相助、遇难呈祥、转危为安。',
   ),
   ShenshaDetail(
@@ -62,19 +60,19 @@ const List<ShenshaDetail> shenshaDetails = [
         '华盖逢空亡，才华不得施展。'
         '华盖临桃花，主艺术魅力，但也主感情上的孤独感。'
         '测修行、灵修之事，华盖为吉星。测婚姻，华盖则主孤独之象。',
-    condition: '以年支查之。申子辰年见辰，寅午戌年见戌，巳酉丑年见丑，亥卯未年见未。',
+    condition: '以日支查之。申子辰日见辰，寅午戌日见戌，巳酉丑日见丑，亥卯未日见未。',
     effect: '吉凶参半。主才华艺术则吉，主孤独清高则凶。',
   ),
   ShenshaDetail(
-    name: '咸池',
+    name: '桃花',
     starName: '桃花星',
-    meaning: '又称桃花，主感情、异性、魅力。咸池为天池星，主淫邪、美貌。',
-    usage: '咸池临用神或世爻，主人有魅力、异性缘好。'
-        '咸池临官鬼，主因色惹祸、桃花劫。咸池临妻财，主因色得财。'
-        '咸池动而生世，主有桃花运。咸池动而克世，主因色招灾。'
-        '咸池临玄武，主暗昧淫邪之事。咸池临白虎，主因色伤身。'
-        '测婚姻，咸池临用神为感情丰富；测官司，咸池主因色起讼。'
-        '咸池逢空亡，桃花落空；逢冲，桃花变动或结束。',
+    meaning: '又称咸池，主感情、异性、魅力。桃花为天池星，主淫邪、美貌。',
+    usage: '桃花临用神或世爻，主人有魅力、异性缘好。'
+        '桃花临官鬼，主因色惹祸、桃花劫。桃花临妻财，主因色得财。'
+        '桃花动而生世，主有桃花运。桃花动而克世，主因色招灾。'
+        '桃花临玄武，主暗昧淫邪之事。桃花临白虎，主因色伤身。'
+        '测婚姻，桃花临用神为感情丰富；测官司，桃花主因色起讼。'
+        '桃花逢空亡，桃花落空；逢冲，桃花变动或结束。',
     condition: '以日支查之。申子辰日见酉，寅午戌日见卯，巳酉丑日见午，亥卯未日见子。',
     effect: '吉凶参半。主魅力感情则吉，主淫邪灾祸则凶。',
   ),
@@ -104,6 +102,18 @@ const List<ShenshaDetail> shenshaDetails = [
     condition: '按月支查之。寅月见丑，卯月见寅，辰月见卯，巳月见辰，'
         '午月见巳，未月见午，申月见未，酉月见申，戌月见酉，亥月见戌，子月见亥，丑月见子。',
     effect: '大吉。主健康、遇良医、疾病可愈。',
+  ),
+  ShenshaDetail(
+    name: '谋星',
+    starName: '谋星',
+    meaning: '主谋划、策略、暗中运筹。谋星为智谋之星，主策划与暗中相助。',
+    usage: '谋星临用神或世爻，主事情可暗中运筹、有贵人暗中相助。'
+        '测事业谋星临官鬼，主可借权力或策略成事。'
+        '测财运谋星临妻财，主有暗财、筹划得利。'
+        '谋星逢空，谋划落空。逢冲，计划有变。'
+        '谋星临玄武，主暗中操作。临勾陈，主谋划受阻。',
+    condition: '以日支查之。申子辰日见戌，巳酉丑日见未，寅午戌日见辰，亥卯未日见丑。',
+    effect: '吉凶参半。主谋略策划则吉，主阴谋算计则凶。',
   ),
   ShenshaDetail(
     name: '文昌',
@@ -149,20 +159,6 @@ const List<ShenshaDetail> shenshaDetails = [
     effect: '吉凶参半。主刚强果断则吉，主血光争斗则凶。',
   ),
   ShenshaDetail(
-    name: '红鸾',
-    starName: '红鸾星',
-    meaning: '主婚恋、喜庆、姻缘。红鸾为婚缘之星，主婚姻喜庆。',
-    usage: '红鸾临用神或世爻，主有婚姻之喜、恋爱之象。'
-        '红鸾临官鬼，主男方有婚恋之意。红鸾临妻财，主女方有婚恋之象。'
-        '测婚姻，红鸾为重要参考，旺象则婚事可成。'
-        '红鸾逢空，婚恋无着落。逢冲，婚恋有变。'
-        '红鸾合世，主有姻缘来临。红鸾冲世，主姻缘错过。'
-        '红鸾动，主近期有婚恋之事。',
-    condition: '以日支查之。子日见卯，丑日见寅，寅日见丑，卯日见子，'
-        '辰日见亥，巳日见戌，午日见酉，未日见申，申日见未，酉日见午，戌日见巳，亥日见辰。',
-    effect: '大吉。主婚恋喜事、姻缘到来。',
-  ),
-  ShenshaDetail(
     name: '天喜',
     starName: '天喜星',
     meaning: '主喜庆、添丁、好事临近。天喜为欢庆之星，主喜事临门。',
@@ -171,9 +167,9 @@ const List<ShenshaDetail> shenshaDetails = [
         '天喜临妻财，主有财喜。天喜临官鬼，主有事业之喜。'
         '测生育，天喜临子孙为吉兆。'
         '天喜逢空，喜事成空。逢冲，喜事有变或推迟。'
-        '天喜与红鸾同现，主双重喜事或婚喜同至。',
-    condition: '以日支查之。红鸾对冲位，子日见酉，丑日见申，寅日见未，卯日见午，'
-        '辰日见巳，巳日见辰，午日见卯，未日见寅，申日见丑，酉日见子，戌日见亥，亥日见戌。',
+        '天喜动，主近期有喜庆之事。',
+    condition: '以月支（季节）查之。寅卯辰月（春）见戌，巳午未月（夏）见丑，'
+        '申酉戌月（秋）见辰，亥子丑月（冬）见未。',
     effect: '大吉。主喜事临门、好事将近。',
   ),
   ShenshaDetail(
@@ -200,47 +196,8 @@ const List<ShenshaDetail> shenshaDetails = [
         '灾煞克世，主自身有灾。灾煞生世，灾祸可化解。'
         '灾煞逢空，灾祸虚惊。逢合，灾祸被化解或推迟。'
         '测出行灾煞动，防灾祸发生。测疾病灾煞动，防病情加重。',
-    condition: '以年支查之。申子辰年见午，寅午戌年见子，巳酉丑年见卯，亥卯未年见酉。',
+    condition: '以日支查之。申子辰日见午，寅午戌日见子，巳酉丑日见卯，亥卯未日见酉。',
     effect: '大凶。主意外灾祸、病伤之事。',
-  ),
-  ShenshaDetail(
-    name: '亡神',
-    starName: '亡神星',
-    meaning: '主失物、走失、神魂不定。亡神为失亡之星，主遗失走失。',
-    usage: '亡神临用神，主所测之人或物有走失、遗失之象。'
-        '亡神临官鬼，主因官非而失。亡神临兄弟，主因朋友而失。'
-        '亡神克世，主自身失魂落魄、精神不集中。'
-        '测失物，亡神为重要参考信息。'
-        '亡神逢空，失物可寻回。逢冲，失物有转移。'
-        '亡神临玄武，主被盗。亡神临白虎，主被抢。',
-    condition: '以日支查之。申子辰日见亥，寅午戌日见巳，巳酉丑日见申，亥卯未日见寅。',
-    effect: '大凶。主走失、遗失、精神恍惚。',
-  ),
-  ShenshaDetail(
-    name: '孤辰',
-    starName: '孤辰星',
-    meaning: '主孤独、无依、性格孤僻。孤辰为孤独之星，主孤寡离群。',
-    usage: '孤辰临世爻，主自身性格孤僻、不合群。'
-        '孤辰临官鬼，男主婚姻晚。孤辰临妻财，女主婚姻迟。'
-        '测婚姻，孤辰为不利信息，主晚婚或婚姻不顺。'
-        '孤辰逢空，孤独感可化解。逢冲，孤独状态会改变。'
-        '孤辰临青龙，主清高自许。临玄武，主孤独隐士之象。'
-        '测修行，孤辰反为吉象，主适合独修。',
-    condition: '以年支查之。亥子丑年见戌，寅卯辰年见巳，巳午未年见申，申酉戌年见亥。',
-    effect: '凶。主孤独、婚姻不顺、性格孤僻。',
-  ),
-  ShenshaDetail(
-    name: '寡宿',
-    starName: '寡宿星',
-    meaning: '主寡居、鳏独、与亲缘淡薄。寡宿为孤寡之星，主亲情淡薄。',
-    usage: '寡宿临世爻，主亲情缘薄、与家人关系疏远。'
-        '寡宿临官鬼，男主鳏居之象。寡宿临妻财，女主寡居之象。'
-        '测婚姻，寡宿为忌神，主婚姻不长久或配偶缘薄。'
-        '寡宿逢空，孤独状态可改变。逢冲，孤寡之象被冲破。'
-        '寡宿与孤辰同现，孤独之象更重。'
-        '测子女，寡宿临子孙主子女缘薄。',
-    condition: '以年支查之。亥子丑年见寅，寅卯辰年见丑，巳午未年见辰，申酉戌年见未。',
-    effect: '凶。主孤寡、亲情淡薄、婚姻不顺。',
   ),
 ];
 
@@ -324,22 +281,19 @@ class _ShenshaCard extends StatelessWidget {
 
   IconData _getIcon(String name) {
     switch (name) {
-      case '天乙贵人': return Icons.star;
+      case '贵人': return Icons.star;
       case '驿马': return Icons.directions_run;
       case '华盖': return Icons.diamond;
-      case '咸池': return Icons.favorite;
+      case '桃花': return Icons.favorite;
       case '禄神': return Icons.trending_up;
       case '天医': return Icons.local_hospital;
       case '文昌': return Icons.book;
       case '将星': return Icons.military_tech;
       case '羊刃': return Icons.flash_on;
-      case '红鸾': return Icons.favorite_border;
       case '天喜': return Icons.celebration;
       case '劫煞': return Icons.warning_amber;
       case '灾煞': return Icons.report_problem;
-      case '亡神': return Icons.search_off;
-      case '孤辰': return Icons.person_off;
-      case '寡宿': return Icons.bed;
+      case '谋星': return Icons.psychology;
       default: return Icons.star_border;
     }
   }

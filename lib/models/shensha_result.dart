@@ -1,15 +1,15 @@
 /// 神煞结果模型
 library;
 
-/// 神煞结果类（共16项）
+/// 神煞结果类（共13项）
 class ShenshaResult {
-  /// 天乙贵人
+  /// 贵人
   final String tianYi;
   /// 驿马
   final String yiMa;
   /// 华盖
   final String huaGai;
-  /// 咸池（桃花）
+  /// 桃花（咸池）
   final String xianChi;
   /// 禄神
   final String luShen;
@@ -23,22 +23,16 @@ class ShenshaResult {
   final String jiangXing;
   /// 羊刃
   final String yangRen;
-  /// 红鸾
-  final String hongLuan;
   /// 天喜
   final String tianXi;
   /// 劫煞
   final String jieSha;
 
-  // === 新增 (2026-07-01) ===
   /// 灾煞
   final String zaiSha;
-  /// 亡神
-  final String wangShen;
-  /// 孤辰
-  final String guChen;
-  /// 寡宿
-  final String guaSu;
+
+  /// 谋星
+  final String mouXing;
 
   ShenshaResult({
     this.tianYi = '',
@@ -50,13 +44,10 @@ class ShenshaResult {
     this.wenChang = '',
     this.jiangXing = '',
     this.yangRen = '',
-    this.hongLuan = '',
     this.tianXi = '',
     this.jieSha = '',
     this.zaiSha = '',
-    this.wangShen = '',
-    this.guChen = '',
-    this.guaSu = '',
+    this.mouXing = '',
   });
 
   /// 转换为 JSON Map
@@ -71,13 +62,10 @@ class ShenshaResult {
       'wenChang': wenChang,
       'jiangXing': jiangXing,
       'yangRen': yangRen,
-      'hongLuan': hongLuan,
       'tianXi': tianXi,
       'jieSha': jieSha,
       'zaiSha': zaiSha,
-      'wangShen': wangShen,
-      'guChen': guChen,
-      'guaSu': guaSu,
+      'mouXing': mouXing,
     };
   }
 
@@ -93,13 +81,10 @@ class ShenshaResult {
       wenChang: json['wenChang'] as String? ?? '',
       jiangXing: json['jiangXing'] as String? ?? '',
       yangRen: json['yangRen'] as String? ?? '',
-      hongLuan: json['hongLuan'] as String? ?? '',
       tianXi: json['tianXi'] as String? ?? '',
       jieSha: json['jieSha'] as String? ?? '',
       zaiSha: json['zaiSha'] as String? ?? '',
-      wangShen: json['wangShen'] as String? ?? '',
-      guChen: json['guChen'] as String? ?? '',
-      guaSu: json['guaSu'] as String? ?? '',
+      mouXing: json['mouXing'] as String? ?? '',
     );
   }
 
@@ -108,8 +93,7 @@ class ShenshaResult {
     return tianYi.isEmpty && yiMa.isEmpty && huaGai.isEmpty &&
         xianChi.isEmpty && tianYiShen.isEmpty && luShen.isEmpty &&
         wenChang.isEmpty && jiangXing.isEmpty && yangRen.isEmpty &&
-        hongLuan.isEmpty && tianXi.isEmpty && jieSha.isEmpty &&
-        zaiSha.isEmpty && wangShen.isEmpty && guChen.isEmpty && guaSu.isEmpty;
+        tianXi.isEmpty && jieSha.isEmpty && zaiSha.isEmpty && mouXing.isEmpty;
   }
 
   @override
@@ -117,20 +101,17 @@ class ShenshaResult {
     List<String> parts = [];
     if (tianYi.isNotEmpty) parts.add('天乙:$tianYi');
     if (yiMa.isNotEmpty) parts.add('驿马:$yiMa');
-    if (xianChi.isNotEmpty) parts.add('咸池:$xianChi');
+    if (xianChi.isNotEmpty) parts.add('桃花:$xianChi');
     if (luShen.isNotEmpty) parts.add('禄神:$luShen');
     if (huaGai.isNotEmpty) parts.add('华盖:$huaGai');
     if (tianYiShen.isNotEmpty) parts.add('天医:$tianYiShen');
     if (wenChang.isNotEmpty) parts.add('文昌:$wenChang');
     if (jiangXing.isNotEmpty) parts.add('将星:$jiangXing');
     if (yangRen.isNotEmpty) parts.add('羊刃:$yangRen');
-    if (hongLuan.isNotEmpty) parts.add('红鸾:$hongLuan');
     if (tianXi.isNotEmpty) parts.add('天喜:$tianXi');
     if (jieSha.isNotEmpty) parts.add('劫煞:$jieSha');
     if (zaiSha.isNotEmpty) parts.add('灾煞:$zaiSha');
-    if (wangShen.isNotEmpty) parts.add('亡神:$wangShen');
-    if (guChen.isNotEmpty) parts.add('孤辰:$guChen');
-    if (guaSu.isNotEmpty) parts.add('寡宿:$guaSu');
+    if (mouXing.isNotEmpty) parts.add('谋星:$mouXing');
     return 'ShenshaResult(${parts.join(', ')})';
   }
 }

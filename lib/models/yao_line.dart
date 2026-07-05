@@ -23,6 +23,9 @@ class YaoLine {
   /// 纳甲地支
   String? ganZhi;
 
+  /// 纳甲天干
+  String? tianGan;
+
   /// 地支五行
   String? wuXing;
 
@@ -53,6 +56,9 @@ class YaoLine {
   /// 变爻地支（动爻才有）
   String? bianGanZhi;
 
+  /// 变爻天干（动爻才有）
+  String? bianTianGan;
+
   /// 变爻五行（动爻才有）
   String? bianWuXing;
 
@@ -72,6 +78,7 @@ class YaoLine {
     required this.isYang,
     required this.isDong,
     this.ganZhi,
+    this.tianGan,
     this.wuXing,
     this.liuQin,
     this.liuShen,
@@ -81,6 +88,7 @@ class YaoLine {
     this.fuShen,
     this.feiShen,
     this.bianYaoType,
+    this.bianTianGan,
     this.bianGanZhi,
     this.bianWuXing,
     this.bianLiuQin,
@@ -148,6 +156,7 @@ class YaoLine {
     bool? isYang,
     bool? isDong,
     String? ganZhi,
+    String? tianGan,
     String? wuXing,
     String? liuQin,
     String? liuShen,
@@ -157,6 +166,7 @@ class YaoLine {
     String? fuShen,
     String? feiShen,
     YaoType? bianYaoType,
+    String? bianTianGan,
     String? bianGanZhi,
     String? bianWuXing,
     String? bianLiuQin,
@@ -170,6 +180,7 @@ class YaoLine {
       isYang: isYang ?? this.isYang,
       isDong: isDong ?? this.isDong,
       ganZhi: ganZhi ?? this.ganZhi,
+      tianGan: tianGan ?? this.tianGan,
       wuXing: wuXing ?? this.wuXing,
       liuQin: liuQin ?? this.liuQin,
       liuShen: liuShen ?? this.liuShen,
@@ -179,6 +190,7 @@ class YaoLine {
       fuShen: fuShen ?? this.fuShen,
       feiShen: feiShen ?? this.feiShen,
       bianYaoType: bianYaoType ?? this.bianYaoType,
+      bianTianGan: bianTianGan ?? this.bianTianGan,
       bianGanZhi: bianGanZhi ?? this.bianGanZhi,
       bianWuXing: bianWuXing ?? this.bianWuXing,
       bianLiuQin: bianLiuQin ?? this.bianLiuQin,
@@ -196,6 +208,7 @@ class YaoLine {
       'isYang': isYang,
       'isDong': isDong,
       'ganZhi': ganZhi,
+      'tianGan': tianGan,
       'wuXing': wuXing,
       'liuQin': liuQin,
       'liuShen': liuShen,
@@ -205,6 +218,7 @@ class YaoLine {
       'fuShen': fuShen,
       'feiShen': feiShen,
       'bianYaoType': bianYaoType?.index,
+      'bianTianGan': bianTianGan,
       'bianGanZhi': bianGanZhi,
       'bianWuXing': bianWuXing,
       'bianLiuQin': bianLiuQin,
@@ -222,6 +236,7 @@ class YaoLine {
       isYang: json['isYang'] as bool,
       isDong: json['isDong'] as bool,
       ganZhi: json['ganZhi'] as String?,
+      tianGan: json['tianGan'] as String?,
       wuXing: json['wuXing'] as String?,
       liuQin: json['liuQin'] as String?,
       liuShen: json['liuShen'] as String?,
@@ -233,6 +248,7 @@ class YaoLine {
       bianYaoType: json['bianYaoType'] != null
           ? YaoType.values[json['bianYaoType'] as int]
           : null,
+      bianTianGan: json['bianTianGan'] as String?,
       bianGanZhi: json['bianGanZhi'] as String?,
       bianWuXing: json['bianWuXing'] as String?,
       bianLiuQin: json['bianLiuQin'] as String?,

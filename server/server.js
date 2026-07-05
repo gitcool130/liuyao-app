@@ -30,9 +30,8 @@ const CONFIG = {
 // ==================== 当前版本 ====================
 const CURRENT_VERSION = {
   version: '1.2.3',
-  buildNumber: 65,
+  buildNumber: 73,
   url: '/apk/liuyao-assistant.apk',
-  md5: '803c80d9d28ce4454f1d9be610beeb98',
   description: '解锁申请流程 + SQLite存储',
   forceUpdate: false,
 };
@@ -145,9 +144,16 @@ app.get('/api/check_update', (req, res) => {
   let apkSize = 0;
   try { apkSize = fs.statSync(apkPath).size; } catch (_) {}
 
+  let apkMd5 = '';
+  try {
+    const hash = crypto.createHash('md5');
+    hash.update(fs.readFileSync(apkPath));
+    apkMd5 = hash.digest('hex');
+  } catch (_) {}
+
   res.json({
     success: true,
-    data: { ...CURRENT_VERSION, apkSize },
+    data: { ...CURRENT_VERSION, apkSize, md5: apkMd5 },
   });
 });
 

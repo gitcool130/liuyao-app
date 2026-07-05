@@ -122,8 +122,8 @@ class _SettingsScreenState extends State<SettingsScreen>
 
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('地支五行彩色显示', style: TextStyle(fontSize: 15)),
-          subtitle: const Text('地支+五行文字都按五行颜色显示：水蓝 火红 木绿 金黄 土棕'),
+          title: const Text('卦爻地支五行彩色显示', style: TextStyle(fontSize: 15)),
+          subtitle: const Text('卦爻地支+五行文字都按五行颜色显示：水蓝 火红 木绿 金黄 土棕'),
           value: _temp.showColoredWuXing,
           onChanged: (v) => setState(() => _temp.showColoredWuXing = v),
         ),
@@ -132,8 +132,8 @@ class _SettingsScreenState extends State<SettingsScreen>
 
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('干支彩色显示', style: TextStyle(fontSize: 15)),
-          subtitle: const Text('干支四柱和六亲等信息按五行颜色显示'),
+          title: const Text('日期干支彩色显示', style: TextStyle(fontSize: 15)),
+          subtitle: const Text('起卦日期四柱干支按五行颜色显示'),
           value: _temp.showColoredGanZhi,
           onChanged: (v) => setState(() => _temp.showColoredGanZhi = v),
         ),
@@ -185,7 +185,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         const SizedBox(height: 4),
         const Text('控制卦爻符号（───○▅▅▅▅▅等）的显示大小', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 8),
-        _fontSizeItem('爻象字体', _temp.yaoFontSize, (v) => _temp.yaoFontSize = v, 8, 18),
+        _fontSizeItem('爻象字体', _temp.yaoFontSize, (v) => _temp.yaoFontSize = v, 6, 12),
 
         const Divider(height: 32),
 
@@ -250,7 +250,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
               ),
               const SizedBox(height: 4),
-              Text('神煞：天乙:丑未  驿马:申  咸池:卯',
+              Text('神煞：天乙:丑未  驿马:申  桃花:卯',
                   style: TextStyle(fontSize: _temp.shenshaFontSize, color: Colors.black87)),
             ],
           ),
@@ -263,11 +263,10 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Widget _buildShenshaTab() {
     const items = [
-      ('tianYi', '天乙贵人'), ('yiMa', '驿马'), ('huaGai', '华盖'),
-      ('xianChi', '咸池'), ('luShen', '禄神'), ('tianYiShen', '天医'),
-      ('wenChang', '文昌'), ('jiangXing', '将星'), ('yangRen', '羊刃'),
-      ('hongLuan', '红鸾'), ('tianXi', '天喜'), ('jieSha', '劫煞'),
-      ('zaiSha', '灾煞'), ('wangShen', '亡神'), ('guChen', '孤辰'), ('guaSu', '寡宿'),
+      ('tianYi', '贵人'), ('yiMa', '驿马'), ('huaGai', '华盖'),
+      ('xianChi', '桃花'), ('luShen', '禄神'), ('tianYiShen', '天医'),
+      ('mouXing', '谋星'), ('wenChang', '文昌'), ('jiangXing', '将星'),
+      ('yangRen', '羊刃'), ('tianXi', '天喜'), ('jieSha', '劫煞'), ('zaiSha', '灾煞'),
     ];
 
     return ListView(

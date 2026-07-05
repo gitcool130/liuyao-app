@@ -137,16 +137,17 @@ class GuaCalculator {
       String ying = yao.isYing == true ? '应' : '';
       String dong = yao.isDong ? '○' : '';
       String kong = yao.isXunKong == true ? '空' : '';
-      sb.writeln('${yao.positionName}: ${yao.liuShen} ${yao.liuQin} ${yao.ganZhi}${yao.wuXing} $shi$ying$dong$kong');
+      sb.writeln('${yao.positionName}: ${yao.liuShen} ${yao.liuQin} ${yao.tianGan}${yao.ganZhi}${yao.wuXing} $shi$ying$dong$kong');
     }
     sb.writeln('');
     sb.writeln('=== 神煞 ===');
-    sb.writeln('天乙贵人: ${record.shensha.tianYi}    文昌: ${record.shensha.wenChang}');
+    sb.writeln('贵人: ${record.shensha.tianYi}    文昌: ${record.shensha.wenChang}');
     sb.writeln('驿马: ${record.shensha.yiMa}        将星: ${record.shensha.jiangXing}');
-    sb.writeln('咸池: ${record.shensha.xianChi}        红鸾: ${record.shensha.hongLuan}');
-    sb.writeln('禄神: ${record.shensha.luShen}        天喜: ${record.shensha.tianXi}');
-    sb.writeln('华盖: ${record.shensha.huaGai}        羊刃: ${record.shensha.yangRen}');
-    sb.writeln('天医: ${record.shensha.tianYiShen}        劫煞: ${record.shensha.jieSha}');
+    sb.writeln('桃花: ${record.shensha.xianChi}        天喜: ${record.shensha.tianXi}');
+    sb.writeln('禄神: ${record.shensha.luShen}        羊刃: ${record.shensha.yangRen}');
+    sb.writeln('华盖: ${record.shensha.huaGai}        劫煞: ${record.shensha.jieSha}');
+    sb.writeln('天医: ${record.shensha.tianYiShen}        灾煞: ${record.shensha.zaiSha}');
+    sb.writeln('谋星: ${record.shensha.mouXing}');
 
     return sb.toString();
   }

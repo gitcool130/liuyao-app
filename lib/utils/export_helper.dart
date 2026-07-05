@@ -42,10 +42,10 @@ class ExportHelper {
     // 神煞
     buffer.writeln('**神煞**：');
     final shenshaParts = <String>[];
-    if (record.shensha.tianYi.isNotEmpty) shenshaParts.add('天乙:${record.shensha.tianYi}');
+    if (record.shensha.tianYi.isNotEmpty) shenshaParts.add('贵人:${record.shensha.tianYi}');
     if (record.shensha.yiMa.isNotEmpty) shenshaParts.add('驿马:${record.shensha.yiMa}');
     if (record.shensha.huaGai.isNotEmpty) shenshaParts.add('华盖:${record.shensha.huaGai}');
-    if (record.shensha.xianChi.isNotEmpty) shenshaParts.add('咸池:${record.shensha.xianChi}');
+    if (record.shensha.xianChi.isNotEmpty) shenshaParts.add('桃花:${record.shensha.xianChi}');
     if (record.shensha.tianYiShen.isNotEmpty) shenshaParts.add('天医:${record.shensha.tianYiShen}');
     if (record.shensha.luShen.isNotEmpty) shenshaParts.add('禄神:${record.shensha.luShen}');
     buffer.writeln(shenshaParts.join('  '));
@@ -115,8 +115,8 @@ class ExportHelper {
     for (var yao in sortedLines) {
       final parts = <String>[];
 
-      // 六神（首字）
-      parts.add((yao.liuShen?.isNotEmpty ?? false) ? yao.liuShen![0] : '');
+      // 六神（完整两字）
+      parts.add(yao.liuShen ?? '');
 
       // 伏神：六亲首字+地支（动态计算）
       if (yao.fuShen != null && yao.fuShen!.isNotEmpty) {
@@ -131,11 +131,11 @@ class ExportHelper {
       // 六亲（完整两个字）
       parts.add(yao.liuQin ?? '');
 
-      // 地支+五行（紧凑，不留空）
+      // 地支+五行（含纳甲天干）
       if (yao.isXunKong == true) {
-        parts.add('*${yao.ganZhi ?? ''}${yao.wuXing ?? ''}*');
+        parts.add('*${yao.tianGan ?? ''}${yao.ganZhi ?? ''}${yao.wuXing ?? ''}*');
       } else {
-        parts.add('${yao.ganZhi ?? ''}${yao.wuXing ?? ''}');
+        parts.add('${yao.tianGan ?? ''}${yao.ganZhi ?? ''}${yao.wuXing ?? ''}');
       }
 
       // 世应
@@ -151,14 +151,17 @@ class ExportHelper {
           String bianInfo = '';
           if (yao.bianLiuQin != null && yao.bianLiuQin!.isNotEmpty) {
             bianInfo = yao.bianLiuQin!;
+            if (yao.bianTianGan != null) {
+              bianInfo += yao.bianTianGan!;
+            }
             if (yao.bianGanZhi != null) {
               bianInfo += yao.bianGanZhi!;
               if (yao.bianWuXing != null) {
                 bianInfo += yao.bianWuXing!;
               }
             }
-          } else if (yao.bianGanZhi != null) {
-            bianInfo = yao.bianGanZhi!;
+          } else if (yao.bianTianGan != null || yao.bianGanZhi != null) {
+            bianInfo = (yao.bianTianGan ?? '') + (yao.bianGanZhi ?? '');
             if (yao.bianWuXing != null) {
               bianInfo += yao.bianWuXing!;
             }

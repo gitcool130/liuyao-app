@@ -28,22 +28,19 @@ const List<ColorOption> presetColors = [
 
 /// 全部神煞项定义（名称 → 显示标签）
 const Map<String, String> allShenshaItems = {
-  '天乙贵人': 'tianYi',
+  '贵人': 'tianYi',
   '驿马': 'yiMa',
-  '咸池': 'xianChi',
+  '桃花': 'xianChi',
   '禄神': 'luShen',
   '华盖': 'huaGai',
   '天医': 'tianYiShen',
+  '谋星': 'mouXing',
   '文昌': 'wenChang',
   '将星': 'jiangXing',
   '羊刃': 'yangRen',
-  '红鸾': 'hongLuan',
   '天喜': 'tianXi',
   '劫煞': 'jieSha',
   '灾煞': 'zaiSha',
-  '亡神': 'wangShen',
-  '孤辰': 'guChen',
-  '寡宿': 'guaSu',
 };
 
 class AppSettings {
@@ -70,6 +67,7 @@ class AppSettings {
 
   // ========== 神煞显示 ==========
   List<String> visibleShensha; // 用户选择显示的神煞（field名列表）
+  bool showUnlockDevTools;     // 解锁页是否显示设备ID和验证码输入
 
   AppSettings({
     Color? staticYaoColor,
@@ -86,9 +84,10 @@ class AppSettings {
     double? ganZhiFontSize,
     double? xunKongFontSize,
     List<String>? visibleShensha,
+    this.showUnlockDevTools = false,
   })  : staticYaoColor = staticYaoColor ?? Colors.black,
         dongYaoColor = dongYaoColor ?? Colors.red,
-        yaoFontSize = yaoFontSize ?? 10,
+        yaoFontSize = yaoFontSize ?? 8,
         chongLineColor = chongLineColor ?? const Color(0xFFE53935),
         heLineColor = heLineColor ?? const Color(0xFF43A047),
         shengLineColor = shengLineColor ?? const Color(0xFFFFB300),
@@ -144,6 +143,7 @@ class AppSettings {
     'ganZhiFontSize': ganZhiFontSize,
     'xunKongFontSize': xunKongFontSize,
     'visibleShensha': visibleShensha,
+    'showUnlockDevTools': showUnlockDevTools,
   };
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -163,6 +163,7 @@ class AppSettings {
     visibleShensha: json['visibleShensha'] != null
         ? (json['visibleShensha'] as List).cast<String>()
         : null,
+    showUnlockDevTools: json['showUnlockDevTools'] as bool? ?? false,
   );
 
   /// 加载设置
@@ -199,6 +200,7 @@ class AppSettings {
     double? ganZhiFontSize,
     double? xunKongFontSize,
     List<String>? visibleShensha,
+    bool? showUnlockDevTools,
   }) {
     return AppSettings(
       staticYaoColor: staticYaoColor ?? this.staticYaoColor,
@@ -215,6 +217,7 @@ class AppSettings {
       ganZhiFontSize: ganZhiFontSize ?? this.ganZhiFontSize,
       xunKongFontSize: xunKongFontSize ?? this.xunKongFontSize,
       visibleShensha: visibleShensha ?? this.visibleShensha,
+      showUnlockDevTools: showUnlockDevTools ?? this.showUnlockDevTools,
     );
   }
 }

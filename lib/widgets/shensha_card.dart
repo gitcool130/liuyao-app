@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/shensha_result.dart';
-import '../models/app_settings.dart';
 import '../providers/settings_provider.dart';
 
 /// 神煞信息卡片组件
@@ -20,39 +19,34 @@ class _ShenshaCardState extends State<ShenshaCard> {
 
   /// 神煞名称列表
   static const _shenshaDisplayNames = [
-    '天乙贵人', '驿马', '咸池', '禄神', '华盖', '天医',
-    '文昌', '将星', '羊刃', '红鸾', '天喜', '劫煞',
-    '灾煞', '亡神', '孤辰', '寡宿',
+    '贵人', '驿马', '桃花', '禄神', '华盖', '天医',
+    '谋星', '文昌', '将星', '羊刃', '天喜', '劫煞', '灾煞',
   ];
 
   static String _getShenshaValue(ShenshaResult s, String displayName) {
     switch (displayName) {
-      case '天乙贵人': return s.tianYi;
+      case '贵人': return s.tianYi;
       case '驿马': return s.yiMa;
-      case '咸池': return s.xianChi;
+      case '桃花': return s.xianChi;
       case '禄神': return s.luShen;
       case '华盖': return s.huaGai;
       case '天医': return s.tianYiShen;
       case '文昌': return s.wenChang;
       case '将星': return s.jiangXing;
       case '羊刃': return s.yangRen;
-      case '红鸾': return s.hongLuan;
       case '天喜': return s.tianXi;
       case '劫煞': return s.jieSha;
       case '灾煞': return s.zaiSha;
-      case '亡神': return s.wangShen;
-      case '孤辰': return s.guChen;
-      case '寡宿': return s.guaSu;
+      case '谋星': return s.mouXing;
       default: return '';
     }
   }
 
   static const _fieldToName = {
-    'tianYi': '天乙贵人', 'yiMa': '驿马', 'xianChi': '咸池',
+    'tianYi': '贵人', 'yiMa': '驿马', 'xianChi': '桃花',
     'luShen': '禄神', 'huaGai': '华盖', 'tianYiShen': '天医',
     'wenChang': '文昌', 'jiangXing': '将星', 'yangRen': '羊刃',
-    'hongLuan': '红鸾', 'tianXi': '天喜', 'jieSha': '劫煞',
-    'zaiSha': '灾煞', 'wangShen': '亡神', 'guChen': '孤辰', 'guaSu': '寡宿',
+    'tianXi': '天喜', 'jieSha': '劫煞', 'zaiSha': '灾煞', 'mouXing': '谋星',
   };
 
   @override
@@ -72,7 +66,9 @@ class _ShenshaCardState extends State<ShenshaCard> {
       if (!visibleFields.contains(fieldName)) continue;
       final value = _getShenshaValue(widget.shensha, displayName);
       if (value.isEmpty) continue;
-      items.add(_ShenshaItem(displayName, value, fieldName));
+      // 补齐单字结果为双字宽度，使各行的冒号后位置对齐
+      final paddedValue = value.length == 1 ? '$value　' : value;
+      items.add(_ShenshaItem(displayName, paddedValue, fieldName));
     }
 
     if (items.isEmpty) return const SizedBox.shrink();
@@ -94,9 +90,17 @@ class _ShenshaCardState extends State<ShenshaCard> {
               Wrap(
                 spacing: 12,
                 runSpacing: 4,
-                children: showing.map((item) => Text(
-                  '${item.name}：${item.value}',
-                  style: TextStyle(fontSize: fontSize),
+                children: showing.map((item) => RichText(
+                  text: TextSpan(
+                    style: TextStyle(fontSize: fontSize, color: Colors.black87),
+                    children: [
+                      TextSpan(
+                        text: item.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      TextSpan(text: '：${item.value}'),
+                    ],
+                  ),
                   overflow: TextOverflow.ellipsis,
                 )).toList(),
               ),
