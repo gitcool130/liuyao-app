@@ -187,7 +187,7 @@ class YaoTable extends StatelessWidget {
           _YaoCell(liuQinDisplay, width: 36),
 
           // 地支+五行（支持量化显示）
-          _buildZhiCell(zhiWuXing, isXunKong, quantResult, showColoredWuXing),
+          _buildZhiCell(zhiWuXing, isXunKong, quantResult, showColoredWuXing, tianGan: yao.tianGan),
 
           // 世应
           _YaoCell(
@@ -209,7 +209,9 @@ class YaoTable extends StatelessWidget {
   }
 
   /// 构建地支单元格（支持量化显示）
-  Widget _buildZhiCell(String zhiWuXing, bool isXunKong, QuantificationResult? quant, bool showColoredWuXing) {
+  /// zhiWuXing 格式：天干+地支+五行，如“甲寅木”
+  /// 开启五行彩色显示时，天干按天干五行着色，地支+五行按地支五行着色
+  Widget _buildZhiCell(String zhiWuXing, bool isXunKong, QuantificationResult? quant, bool showColoredWuXing, {String? tianGan}) {
     // 量化值颜色和文本
     Color? quantColor;
     String? quantText;
@@ -231,9 +233,6 @@ class YaoTable extends StatelessWidget {
       }
     }
 
-    // 五行颜色映射（天干+地支+五行，取最后一个字作为五行）
-    final wuXingColor = isXunKong ? null : AppSettings.wuXingColors[zhiWuXing.length > 1 ? zhiWuXing.substring(zhiWuXing.length - 1) : ''];
-
     final zhiWidget = SizedBox(
       width: showQuantification ? 58 : 44,
       child: FittedBox(
@@ -242,8 +241,8 @@ class YaoTable extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            showColoredWuXing && wuXingColor != null
-                ? _buildColoredZhiText(zhiWuXing, isXunKong, wuXingColor)
+            showColoredWuXing && !isXunKong
+                ? _buildColoredZhiText(zhiWuXing, isXunKong, tianGan)
                 : Text(
                     zhiWuXing,
                     style: TextStyle(
@@ -274,19 +273,41 @@ class YaoTable extends StatelessWidget {
     return zhiWidget;
   }
 
-  /// 构建彩色五行地支文本（地支+五行都按五行颜色显示）
-  Widget _buildColoredZhiText(String zhiWuXing, bool isXunKong, Color color) {
-    final diZhi = zhiWuXing.substring(0, zhiWuXing.length - 1);
+  /// 构建彩色五行纳甲文本
+  /// 字符串为“天干+地支+五行”，如“甲寅木”
+  /// 天干按天干五行着色，地支和五行按地支五行着色
+  Widget _buildColoredZhiText(String zhiWuXing, bool isXunKong, String? tianGan) {
+    // 末尾字符为地支五行
     final wuXing = zhiWuXing.substring(zhiWuXing.length - 1);
+    // 地支部分 = 去掉末尾五行后的剩余，再去掉前面的天干
+    final diZhiPart = zhiWuXing.substring(0, zhiWuXing.length - 1);
+    final gan = (tianGan != null && tianGan.isNotEmpty && diZhiPart.startsWith(tianGan))
+        ? tianGan
+        : '';
+    final diZhi = gan.isNotEmpty ? diZhiPart.substring(gan.length) : diZhiPart;
+
+    final ganColor = gan.isNotEmpty ? AppSettings.wuXingColors[tianGanWuXing[gan]] : null;
+    final zhiColor = AppSettings.wuXingColors[diZhiWuXing[diZhi]];
+
     return RichText(
       maxLines: 1,
       text: TextSpan(
         children: [
+          if (gan.isNotEmpty)
+            TextSpan(
+              text: gan,
+              style: TextStyle(
+                fontSize: 14,
+                color: isXunKong ? Colors.grey : (ganColor ?? Colors.black87),
+                fontWeight: FontWeight.bold,
+                fontStyle: isXunKong ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
           TextSpan(
             text: diZhi,
             style: TextStyle(
               fontSize: 14,
-              color: isXunKong ? Colors.grey : color,
+              color: isXunKong ? Colors.grey : (zhiColor ?? Colors.black87),
               fontWeight: FontWeight.bold,
               fontStyle: isXunKong ? FontStyle.italic : FontStyle.normal,
             ),
@@ -295,7 +316,7 @@ class YaoTable extends StatelessWidget {
             text: wuXing,
             style: TextStyle(
               fontSize: 14,
-              color: isXunKong ? Colors.grey : color,
+              color: isXunKong ? Colors.grey : (zhiColor ?? Colors.black87),
               fontWeight: FontWeight.bold,
             ),
           ),
