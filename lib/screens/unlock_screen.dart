@@ -29,10 +29,16 @@ class _UnlockScreenState extends State<UnlockScreen> {
   int _devToolsTapCount = 0;
   static const int _devToolsTapThreshold = 8;
 
+  /// 检查用户是否已输入身份确认信息
+  bool get _canSubmit => _remarkController.text.trim().isNotEmpty;
+
   @override
   void initState() {
     super.initState();
     _loadState();
+    _remarkController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -272,7 +278,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _submitting ? null : _submitRequest,
+                        onPressed: (_submitting || !_canSubmit) ? null : _submitRequest,
                         icon: _submitting
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.send),
