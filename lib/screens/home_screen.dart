@@ -133,7 +133,29 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(width: 8),
           Text('发现新版本'),
         ]),
-        content: Text('v${info.version} (构建${info.buildNumber})\n\n${info.description}\n\n${info.apkSize > 0 ? 'APK大小: ${(info.apkSize / 1048576).toStringAsFixed(1)}MB' : ''}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('v${info.version} (构建${info.buildNumber})',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(info.description, style: TextStyle(color: Colors.grey.shade700)),
+            if (info.changelog.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              const Text('更新内容:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const SizedBox(height: 4),
+              Text(info.changelog, style: const TextStyle(fontSize: 13, height: 1.5)),
+            ],
+            if (info.apkSize > 0) ...[
+              const SizedBox(height: 6),
+              Text('APK大小: ${(info.apkSize / 1048576).toStringAsFixed(1)}MB',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+            ],
+          ],
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('稍后')),
           ElevatedButton(
@@ -310,6 +332,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        const Spacer(),
+                        TextButton.icon(
+                          onPressed: _selectTime,
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: const Text('修改时间', style: TextStyle(fontSize: 13)),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -344,15 +377,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         color: Color(0xFF5D4037),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: _selectTime,
-                        icon: const Icon(Icons.edit),
-                        label: const Text('修改时间'),
                       ),
                     ),
                   ],
@@ -464,7 +488,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton.icon(
               onPressed: _navigateToManualInput,
               icon: const Icon(Icons.edit_note),
-              label: const Text('手动输入背面数'),
+              label: Text('手动排盘', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
               ),
@@ -472,11 +496,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 12),
 
-            // 在线摇卦按钮
+            // 在线起卦按钮
             ElevatedButton.icon(
               onPressed: _navigateToShake,
               icon: const Icon(Icons.casino),
-              label: const Text('在线摇卦'),
+              label: Text('在线起卦', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
               ),
@@ -484,7 +508,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 12),
 
-            // 拍照导入按钮
+            // 拍照导入按钮（略带反差的配色）
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -495,11 +519,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
               icon: const Icon(Icons.camera_alt),
-              label: const Text('拍照导入排盘'),
+              label: Text('拍照导入排盘', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
               ),
             ),
 

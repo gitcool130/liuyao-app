@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'providers/divination_provider.dart';
 import 'providers/history_provider.dart';
 import 'providers/settings_provider.dart';
+import 'models/app_settings.dart';
 import 'algorithms/shouxing_calendar.dart';
 import 'screens/home_screen.dart';
 import 'screens/manual_input_screen.dart';
@@ -47,7 +48,12 @@ void main() async {
   /// 冷启动时检查分享intent
   _checkColdStartShare(shareChannel);
 
-  runApp(LiuYaoApp(settingsProvider: settingsProvider));
+  runApp(
+    ChangeNotifierProvider<SettingsProvider>.value(
+      value: settingsProvider,
+      child: LiuYaoApp(),
+    ),
+  );
 }
 
 /// 显示分享确认对话框
@@ -96,16 +102,79 @@ void _checkColdStartShare(MethodChannel channel) {
 }
 
 class LiuYaoApp extends StatelessWidget {
-  final SettingsProvider settingsProvider;
-  const LiuYaoApp({super.key, required this.settingsProvider});
+  const LiuYaoApp({super.key});
+
+  /// 根据配色风格和亮度生成 ThemeData
+  static ThemeData _buildTheme(String style, Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    Color seed;
+    Color appBar;
+    Color scaffold;
+    Color buttonBg;
+    Color cardColor;
+    switch (style) {
+      case 'cool':
+        seed = const Color(0xFF5B7FA5);   // 雅致钢蓝
+        appBar = const Color(0xFF5B7FA5);
+        scaffold = isDark ? const Color(0xFF121212) : const Color(0xFFF0F4F8);
+        buttonBg = const Color(0xFF5B7FA5);
+        cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+        break;
+      case 'warm':
+        seed = const Color(0xFFBC7060);   // 柔暖陶土色
+        appBar = const Color(0xFFBC7060);
+        scaffold = isDark ? const Color(0xFF1A1212) : const Color(0xFFFDF2F2);
+        buttonBg = const Color(0xFFBC7060);
+        cardColor = isDark ? const Color(0xFF2A1A1A) : Colors.white;
+        break;
+      case 'neutral':
+        seed = const Color(0xFF8B8070);   // 暖灰褐色
+        appBar = const Color(0xFF8B8070);
+        scaffold = isDark ? const Color(0xFF181612) : const Color(0xFFF8F6F2);
+        buttonBg = const Color(0xFF8B8070);
+        cardColor = isDark ? const Color(0xFF28241E) : Colors.white;
+        break;
+      default: // 'brown' or 'system'
+        seed = const Color(0xFF5D4037);
+        appBar = const Color(0xFF8B4513);
+        scaffold = isDark ? const Color(0xFF1A1410) : const Color(0xFFF5F0E8);
+        buttonBg = const Color(0xFF8B4513);
+        cardColor = isDark ? const Color(0xFF2A2018) : Colors.white;
+        break;
+    }
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: brightness),
+      scaffoldBackgroundColor: scaffold,
+      appBarTheme: AppBarTheme(backgroundColor: appBar, foregroundColor: Colors.white, centerTitle: true),
+      cardTheme: CardThemeData(
+        color: cardColor, elevation: 2,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true, fillColor: cardColor,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: buttonBg, foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // 监听设置变化以实时更新主题
+    final sp = context.watch<SettingsProvider>();
+    final style = sp.settings.themeStyle;
+    final themeMode = style == 'system' ? ThemeMode.system : ThemeMode.light;
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => DivinationProvider()),
         ChangeNotifierProvider(create: (_) => HistoryProvider()),
-        ChangeNotifierProvider.value(value: settingsProvider),
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,
@@ -156,43 +225,9 @@ class LiuYaoApp extends StatelessWidget {
             child: child!,
           );
         },
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF5D4037), // 棕色系
-            brightness: Brightness.light,
-          ),
-          scaffoldBackgroundColor: const Color(0xFFF5F0E8), // 宣纸色背景
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF8B4513),
-            foregroundColor: Colors.white,
-            centerTitle: true,
-          ),
-          cardTheme: const CardThemeData(
-            color: Colors.white,
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-            ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B4513),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
+        themeMode: themeMode,
+        theme: _buildTheme(style, Brightness.light),
+        darkTheme: _buildTheme(style, Brightness.dark),
         initialRoute: '/',
         routes: {
           '/': (context) => const HomeScreen(),

@@ -23,6 +23,7 @@ class UpdateInfo {
   final int apkSize;
   final String url;
   final String md5;
+  final String changelog;
 
   UpdateInfo({
     required this.version,
@@ -31,6 +32,7 @@ class UpdateInfo {
     required this.apkSize,
     required this.url,
     this.md5 = '',
+    this.changelog = '',
   });
 
   factory UpdateInfo.fromJson(Map<String, dynamic> json) => UpdateInfo(
@@ -40,6 +42,7 @@ class UpdateInfo {
     apkSize: json['apkSize'] as int? ?? 0,
     url: json['url'] as String? ?? '/apk/liuyao-assistant.apk',
     md5: json['md5'] as String? ?? '',
+    changelog: json['changelog'] as String? ?? '',
   );
 }
 

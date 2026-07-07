@@ -140,6 +140,12 @@ class _SettingsScreenState extends State<SettingsScreen>
 
         const Divider(height: 32),
 
+        _sectionHeader('配色风格'),
+        const SizedBox(height: 8),
+        _buildThemeStyleSelector(),
+
+        const Divider(height: 32),
+
         _sectionHeader('预览'),
         const SizedBox(height: 8),
         _buildPreviewRow('───', '静爻', _temp.staticYaoColor),
@@ -302,6 +308,40 @@ class _SettingsScreenState extends State<SettingsScreen>
           }),
         )),
       ],
+    );
+  }
+
+  // ==================== 配色风格选择 ====================
+
+  Widget _buildThemeStyleSelector() {
+    const options = [
+      ('brown', '默认棕色调', Color(0xFF5D4037)),
+      ('cool', '冷色调', Color(0xFF5B7FA5)),
+      ('warm', '暖色调', Color(0xFFBC7060)),
+      ('neutral', '中性色调', Color(0xFF8B8070)),
+      ('system', '跟随系统', Color(0xFF757575)),
+    ];
+    return Column(
+      children: options.map((opt) {
+        final (key, label, color) = opt;
+        final selected = _temp.themeStyle == key;
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Container(
+            width: 28, height: 28,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade400, width: 1.5),
+            ),
+          ),
+          title: Text(label, style: const TextStyle(fontSize: 15)),
+          trailing: selected
+              ? const Icon(Icons.check_circle, color: Color(0xFF5D4037), size: 22)
+              : const Icon(Icons.circle_outlined, color: Colors.grey, size: 22),
+          onTap: () => setState(() { _temp.themeStyle = key; }),
+        );
+      }).toList(),
     );
   }
 

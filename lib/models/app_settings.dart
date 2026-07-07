@@ -68,6 +68,7 @@ class AppSettings {
   // ========== 神煞显示 ==========
   List<String> visibleShensha; // 用户选择显示的神煞（field名列表）
   bool showUnlockDevTools;     // 解锁页是否显示设备ID和验证码输入
+  String themeStyle;           // 配色风格: brown/cool/warm/neutral/system
 
   AppSettings({
     Color? staticYaoColor,
@@ -85,6 +86,7 @@ class AppSettings {
     double? xunKongFontSize,
     List<String>? visibleShensha,
     this.showUnlockDevTools = false,
+    this.themeStyle = 'brown',
   })  : staticYaoColor = staticYaoColor ?? Colors.black,
         dongYaoColor = dongYaoColor ?? Colors.red,
         yaoFontSize = yaoFontSize ?? 8,
@@ -144,6 +146,7 @@ class AppSettings {
     'xunKongFontSize': xunKongFontSize,
     'visibleShensha': visibleShensha,
     'showUnlockDevTools': showUnlockDevTools,
+    'themeStyle': themeStyle,
   };
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -164,6 +167,7 @@ class AppSettings {
         ? (json['visibleShensha'] as List).cast<String>()
         : null,
     showUnlockDevTools: json['showUnlockDevTools'] as bool? ?? false,
+    themeStyle: json['themeStyle'] as String? ?? 'brown',
   );
 
   /// 加载设置
@@ -201,6 +205,7 @@ class AppSettings {
     double? xunKongFontSize,
     List<String>? visibleShensha,
     bool? showUnlockDevTools,
+    String? themeStyle,
   }) {
     return AppSettings(
       staticYaoColor: staticYaoColor ?? this.staticYaoColor,
@@ -218,6 +223,7 @@ class AppSettings {
       xunKongFontSize: xunKongFontSize ?? this.xunKongFontSize,
       visibleShensha: visibleShensha ?? this.visibleShensha,
       showUnlockDevTools: showUnlockDevTools ?? this.showUnlockDevTools,
+      themeStyle: themeStyle ?? this.themeStyle,
     );
   }
 }

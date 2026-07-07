@@ -41,7 +41,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      '本应用采用传统纳甲筮法，支持摇卦和手动输入两种起卦方式，自动计算六爻、六亲、六神、伏神、神煞等信息。',
+                      '本应用采用传统纳甲筮法，支持摇卦、手动排盘、时间起卦和拍照导入四种起卦方式，自动计算六爻、六亲、六神、伏神、神煞等信息。',
                       style: TextStyle(fontSize: 14),
                     ),
                   ],
@@ -82,10 +82,10 @@ class AboutScreen extends StatelessWidget {
                     _buildStep(3, '输入所问问题', '填写您想要咨询的问题（可选）。'),
                     const SizedBox(height: 12),
 
-                    _buildStep(4, '选择起卦方式', '• 在线摇卦：模拟抛掷三枚铜钱，共六次\n• 手动输入：直接输入六次抛掷的背面数\n• 拍照/剪贴板导入：拍摄排盘图片或粘贴文字，自动识别'),
+                    _buildStep(4, '选择起卦方式', '• 在线起卦：模拟抛掷三枚铜钱，共六次；支持手摇传感器触发\n• 手动排盘：输入背面数或手动指定各爻的爻象（老阴/少阳/少阴/老阳）\n• 按时间起卦：在摇卦页底部点击"按时间起卦"，详见时间起卦说明\n• 拍照/剪贴板导入：拍摄排盘图片或粘贴文字，自动识别'),
                     const SizedBox(height: 12),
 
-                    _buildStep(5, '查看排盘结果', '排盘完成后可查看本卦、变卦、六爻详情、冲合生克连线等信息，并可保存到历史记录。'),
+                    _buildStep(5, '查看排盘结果', '排盘完成后可查看本卦、变卦、六爻详情、冲合生克连线、六神、神煞等信息，并可保存到历史记录。'),
                   ],
                 ),
               ),
@@ -105,7 +105,7 @@ class AboutScreen extends StatelessWidget {
                         Icon(Icons.casino, size: 24, color: Colors.amber.shade700),
                         const SizedBox(width: 8),
                         const Text(
-                          '在线摇卦',
+                          '在线起卦',
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -141,6 +141,51 @@ class AboutScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // 按时间起卦
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, size: 24, color: Colors.brown.shade600),
+                        const SizedBox(width: 8),
+                        const Text(
+                          '按时间起卦',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '在摇卦页面底部点击"按时间起卦"打开设置面板，包含以下三个选项：',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildStep(1, '节气月偏移（默认开启）',
+                        '节气交接后，农历月可能还未跟上节气月的进度。开启此选项时，在节气已进入下月但农历月尚未同步的时间段内，自动将农历月数值+1，使结果与传统排盘软件易青岚一致。'),
+                    const SizedBox(height: 10),
+                    _buildStep(2, '即时时分起卦',
+                        '用时辰和分钟分支替代年份参与计算。分钟每10分钟转换为一个地支分支（0-9分子分、10-19分丑分……110-119亥分）。\n'
+                        '上卦 = (农历月 + 农历日 + 时辰) % 8\n'
+                        '下卦 = (农历月 + 农历日 + 时辰 + 分支) % 8\n'
+                        '动爻 = (农历月 + 农历日 + 时辰 + 分支) % 6\n'
+                        '此模式下不可指定时间，始终使用起卦当时的时间。'),
+                    const SizedBox(height: 10),
+                    _buildStep(3, '指定时间',
+                        '手动设置起卦的年月日时，用于测试或回溯特定时间的卦象。开启后可分别选择日期和时辰。'),
+                    const SizedBox(height: 10),
+                    const Text('注：即时时分起卦和指定时间互斥，不可同时开启。',
+                        style: TextStyle(fontSize: 13, color: Colors.grey)),
                   ],
                 ),
               ),

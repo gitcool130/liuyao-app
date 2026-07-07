@@ -21,7 +21,8 @@ class JieQiData {
     return JieQiData(
       name: json['n'] as String,
       monthZhiIdx: json['m'] as int,
-      time: DateTime.utc(
+      // 基础节气表数据按北京时间处理，与 App 本地时间保持一致
+      time: DateTime(
         json['y'] as int,
         json['M'] as int,
         json['d'] as int,
@@ -131,7 +132,8 @@ class ShouXingCalendar {
         return JieQiData(
           name: jieQiName,
           monthZhiIdx: monthZhiIdx,
-          time: DateTime.utc(
+          // 节气表时间为北京时间（东八区），存为本地时间以便与 App 的本地 DateTime 比较
+          time: DateTime(
             year,
             item['month'] as int,
             item['day'] as int,

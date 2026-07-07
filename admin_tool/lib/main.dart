@@ -90,8 +90,8 @@ class _AdminToolScreenState extends State<AdminToolScreen>
           tabs: const [
             Tab(text: '手动生成', icon: Icon(Icons.vpn_key, size: 18)),
             Tab(text: '待审批', icon: Icon(Icons.pending_actions, size: 18)),
-            Tab(text: '配置', icon: Icon(Icons.settings, size: 18)),
             Tab(text: '已解锁', icon: Icon(Icons.check_circle, size: 18)),
+            Tab(text: '配置', icon: Icon(Icons.settings, size: 18)),
           ],
         ),
       ),
@@ -100,8 +100,8 @@ class _AdminToolScreenState extends State<AdminToolScreen>
         children: [
           _ManualGenerateTab(),
           _PendingRequestsTab(onApproved: () => _tabCtrl.animateTo(0)),
-          _ConfigTab(),
           _UnlockedListTab(),
+          _ConfigTab(),
         ],
       ),
     );
@@ -271,7 +271,19 @@ class _PendingRequestsTabState extends State<_PendingRequestsTab> {
     final id = req['id'];
     // 选择功能和有效期
     final features = <String>['F005','F006','F007'];
-    String expireDate = '20261231';
+    // 默认从申请日起一年
+    final createdAt = req['createdAt'] as String? ?? '';
+    String expireDate = defaultExpireDate();
+    if (createdAt.isNotEmpty && createdAt.length >= 10) {
+      try {
+        final parts = createdAt.split(' ')[0].split('-');
+        if (parts.length == 3) {
+          final y = int.parse(parts[0]), m = int.parse(parts[1]), d = int.parse(parts[2]);
+          final appDate = DateTime(y, m, d).add(const Duration(days: 365));
+          expireDate = '${appDate.year}${appDate.month.toString().padLeft(2, '0')}${appDate.day.toString().padLeft(2, '0')}';
+        }
+      } catch (_) {}
+    }
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (ctx) => _ApproveDialog(features: features, expireDate: expireDate),
@@ -517,6 +529,7 @@ class _UnlockedListTabState extends State<_UnlockedListTab> {
   Widget _buildCard(Map<String, dynamic> r) {
     final features = (r['features'] as List).join(', ');
     final remark = r['remark'] as String? ?? '';
+    final createdAt = r['createdAt'] as String? ?? '';
     return Card(margin: const EdgeInsets.only(bottom: 8), child: Padding(
       padding: const EdgeInsets.all(10),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -526,7 +539,7 @@ class _UnlockedListTabState extends State<_UnlockedListTab> {
           child: Text('备注: $remark', style: TextStyle(fontSize: 12, color: Colors.blue.shade700)),
         ),
         Text('功能: $features', style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
-        Text('IP: ${r['applicantIp'] ?? ''}  过期: ${r['expireDate'] ?? ''}',
+        Text('申请: $createdAt  过期: ${r['expireDate'] ?? ''}',
             style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
       ]),
     ));
@@ -581,6 +594,18 @@ class _ApproveDialogState extends State<_ApproveDialog> {
           decoration: const InputDecoration(labelText: '过期日期(YYYYMMDD)',
             border: OutlineInputBorder(), isDense: true),
         ),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, runSpacing: 6, children: [
+          _chip('一周', _dateStr(const Duration(days: 7))),
+          _chip('一月', _dateStr(const Duration(days: 30))),
+          _chip('一季', _dateStr(const Duration(days: 90))),
+          _chip('一年', _dateStr(const Duration(days: 365))),
+          ActionChip(
+            label: const Text('永久', style: TextStyle(fontSize: 12)),
+            backgroundColor: Colors.amber.shade50,
+            onPressed: () => setState(() => _dateCtrl.text = '20991231'),
+          ),
+        ]),
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
@@ -592,5 +617,15 @@ class _ApproveDialogState extends State<_ApproveDialog> {
         }, child: const Text('确认审批')),
       ],
     );
+  }
+
+  Widget _chip(String label, String date) => ActionChip(
+    label: Text(label, style: const TextStyle(fontSize: 12)),
+    onPressed: () => setState(() { _expireDate = date; _dateCtrl.text = date; }),
+  );
+
+  String _dateStr(Duration d) {
+    final n = DateTime.now().add(d);
+    return '${n.year}${n.month.toString().padLeft(2, '0')}${n.day.toString().padLeft(2, '0')}';
   }
 }

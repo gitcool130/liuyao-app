@@ -3,6 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import '../algorithms/ganzhi_converter.dart';
+import '../algorithms/constants.dart';
+import '../algorithms/lunar_calendar.dart';
 import '../providers/divination_provider.dart';
 import '../widgets/coin_widget.dart';
 
@@ -242,6 +245,22 @@ class _ShakeScreenState extends State<ShakeScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: _FinishButton(onFinish: _finish),
                       ),
+                    // 按时间起卦按钮
+                    if (_phase != _Phase.rotating)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 4),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: () => _showTimeDivinationSheet(context),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('按时间起卦', style: TextStyle(fontSize: 16)),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     if (_phase == _Phase.rotating && _handShake)
                       _HintBanner('停止摇动后自动揭晓'),
@@ -260,6 +279,95 @@ class _ShakeScreenState extends State<ShakeScreen> {
         ),
       ),
     );
+  }
+
+  // ============== 按时间起卦 ==============
+
+  /// 八卦→三爻背面数 (从下往上: 初→二→三)
+  static const _trigramYaos = {
+    0: [2, 2, 2], // 坤
+    1: [1, 1, 1], // 乾
+    2: [1, 1, 2], // 兑
+    3: [1, 2, 1], // 离
+    4: [1, 2, 2], // 震
+    5: [2, 1, 1], // 巽
+    6: [2, 1, 2], // 坎
+    7: [2, 2, 1], // 艮
+  };
+
+  void _showTimeDivinationSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => _TimeDivinationSheet(onSubmit: (dt, seasonOffset, instantMinute) => _doTimeDivination(dt, seasonOffset, instantMinute)),
+    );
+  }
+
+  void _doTimeDivination(DateTime dt, [bool seasonOffset = true, bool instantMinute = false]) {
+    final gz = GanZhiConverter.convert(dt);
+    final yearNum = diZhi.indexOf(gz.yearZhi) + 1;
+    // 月数使用节气月支：寅=1,卯=2,...,丑=12
+    int monthNum = diZhi.indexOf(gz.monthZhi) + 1;
+    // 日数使用农历日（传统时间起卦惯例）
+    final lunar = LunarCalendar.solarToLunar(dt);
+    final dayNum = lunar[2];
+    final hourNum = diZhi.indexOf(gz.hourZhi) + 1;
+
+    if (instantMinute) {
+      // 即时时分起卦：月+日+时辰做上卦，月+日+时辰+分支做下卦+动爻
+      final hour = dt.hour;
+      final minute = dt.minute;
+      // 计算分支（每10分钟一个地支）
+      int shiChenStartHour;
+      if (hour == 0 || hour == 23) {
+        shiChenStartHour = 23; // 子时
+      } else {
+        shiChenStartHour = hour.isOdd ? hour : hour - 1;
+      }
+      int minutesIntoShiChen;
+      if (hour == 23) {
+        minutesIntoShiChen = minute;
+      } else if (hour == 0) {
+        minutesIntoShiChen = 60 + minute;
+      } else {
+        minutesIntoShiChen = (hour - shiChenStartHour) * 60 + minute;
+      }
+      final minuteBranch = minutesIntoShiChen ~/ 10 + 1; // 1-12
+      final upperNum = (monthNum + dayNum + hourNum) % 8;
+      final lowerNum = (monthNum + dayNum + hourNum + minuteBranch) % 8;
+      final movingRem = (monthNum + dayNum + hourNum + minuteBranch) % 6;
+      _executeDivination(dt, upperNum, lowerNum, movingRem);
+      return;
+    }
+
+    final upperNum = (yearNum + monthNum + dayNum) % 8;
+    final lowerNum = (yearNum + monthNum + dayNum + hourNum) % 8;
+    final movingRem = (yearNum + monthNum + dayNum + hourNum) % 6;
+    _executeDivination(dt, upperNum, lowerNum, movingRem);
+  }
+
+  void _executeDivination(DateTime dt, int upperNum, int lowerNum, int movingRem) {
+
+    final backCounts = List.filled(6, 0);
+    final lower = _trigramYaos[lowerNum]!;
+    final upper = _trigramYaos[upperNum]!;
+    for (int i = 0; i < 3; i++) {
+      backCounts[i] = lower[i];
+      backCounts[i + 3] = upper[i];
+    }
+
+    final moveIndex = movingRem == 0 ? 5 : movingRem - 1;
+    final original = backCounts[moveIndex];
+    backCounts[moveIndex] = original == 1 ? 3 : 0;
+
+    final provider = Provider.of<DivinationProvider>(context, listen: false);
+    provider.setDivinationTime(dt);
+    provider.setBackCounts(backCounts);
+    provider.calculate();
+    Navigator.pushReplacementNamed(context, '/result');
   }
 }
 
@@ -422,6 +530,263 @@ class _FinishButton extends StatelessWidget {
         ),
         child: const Text('进行排卦', style: TextStyle(fontSize: 16)),
       ),
+    );
+  }
+}
+
+/// 时间起卦底部面板
+typedef _TimeSubmitCallback = void Function(DateTime dt, bool seasonOffset, bool instantMinute);
+
+class _TimeDivinationSheet extends StatefulWidget {
+  final _TimeSubmitCallback onSubmit;
+  const _TimeDivinationSheet({required this.onSubmit});
+
+  @override
+  State<_TimeDivinationSheet> createState() => _TimeDivinationSheetState();
+}
+
+class _TimeDivinationSheetState extends State<_TimeDivinationSheet> {
+  late DateTime _dateTime;
+  bool _customTime = false;
+  bool _seasonOffset = true;
+  bool _instantMinute = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _dateTime = DateTime.now();
+  }
+
+  Future<void> _pickDate() async {
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _dateTime,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+    if (d != null) setState(() => _dateTime = DateTime(d.year, d.month, d.day, _dateTime.hour, _dateTime.minute));
+  }
+
+  Future<void> _pickTime() async {
+    final t = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_dateTime),
+    );
+    if (t != null) setState(() => _dateTime = DateTime(_dateTime.year, _dateTime.month, _dateTime.day, t.hour, t.minute));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.access_time, color: Color(0xFF5D4037)),
+              const SizedBox(width: 8),
+              const Text('按时间起卦', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text('公式：年+月+日→上卦，年+月+日+时→下卦+动爻',
+              style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 16),
+
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 16, color: Color(0xFF5D4037)),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_dateTime.year}年${_dateTime.month}月${_dateTime.day}日 '
+                        '${_dateTime.hour.toString().padLeft(2, '0')}时${_dateTime.minute.toString().padLeft(2, '0')}分',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+
+                  // 1. 节气月偏移
+                  Row(
+                    children: [
+                      const Text('节气月偏移', style: TextStyle(fontSize: 15)),
+                      const Spacer(),
+                      Switch(
+                        value: _seasonOffset,
+                        activeColor: const Color(0xFF5D4037),
+                        onChanged: (v) => setState(() => _seasonOffset = v),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+
+                  // 2. 即时时分起卦
+                  Row(
+                    children: [
+                      const Text('即时时分起卦', style: TextStyle(fontSize: 15)),
+                      const Spacer(),
+                      Switch(
+                        value: _instantMinute,
+                        activeColor: const Color(0xFF5D4037),
+                        onChanged: _customTime ? null : (v) => setState(() {
+                          _instantMinute = v;
+                          if (v) { _customTime = false; _dateTime = DateTime.now(); }
+                        }),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+
+                  // 3. 指定时间
+                  Row(
+                    children: [
+                      const Text('指定时间', style: TextStyle(fontSize: 15)),
+                      const Spacer(),
+                      Switch(
+                        value: _customTime,
+                        activeColor: const Color(0xFF5D4037),
+                        onChanged: _instantMinute ? null : (v) => setState(() {
+                          _customTime = v;
+                          if (v) _instantMinute = false;
+                        }),
+                      ),
+                    ],
+                  ),
+                  if (!_instantMinute && _customTime) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickDate,
+                            icon: const Icon(Icons.edit_calendar, size: 16),
+                            label: Text(
+                              '${_dateTime.year}-${_dateTime.month.toString().padLeft(2, '0')}-${_dateTime.day.toString().padLeft(2, '0')}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickTime,
+                            icon: const Icon(Icons.access_time, size: 16),
+                            label: Text(
+                              '${_dateTime.hour.toString().padLeft(2, '0')}:${_dateTime.minute.toString().padLeft(2, '0')}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Card(
+            color: Colors.brown.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: _buildResultPreview(),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                widget.onSubmit(_dateTime, _seasonOffset, _instantMinute);
+              },
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('开始排盘', style: TextStyle(fontSize: 16)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultPreview() {
+    final gz = GanZhiConverter.convert(_dateTime);
+    final lunar = LunarCalendar.solarToLunar(_dateTime);
+    final y = diZhi.indexOf(gz.yearZhi) + 1;
+    final d = lunar[2];
+    final h = diZhi.indexOf(gz.hourZhi) + 1;
+
+    int m = lunar[1].abs();
+    if (!_instantMinute && _seasonOffset) {
+      final monthZhiNum = diZhi.indexOf(gz.monthZhi) + 1;
+      int expectedMonth = (monthZhiNum + 10) % 12;
+      if (expectedMonth == 0) expectedMonth = 12;
+      if (m < expectedMonth) m = m + 1;
+    }
+
+    int upper, lower, movingRem, minuteBranch = 0;
+    if (_instantMinute) {
+      final hour = _dateTime.hour;
+      final minute = _dateTime.minute;
+      int sStart;
+      if (hour == 0 || hour == 23) { sStart = 23; }
+      else { sStart = hour.isOdd ? hour : hour - 1; }
+      int minutesIn;
+      if (hour == 23) { minutesIn = minute; }
+      else if (hour == 0) { minutesIn = 60 + minute; }
+      else { minutesIn = (hour - sStart) * 60 + minute; }
+      minuteBranch = minutesIn ~/ 10 + 1;
+      upper = (m + d + h) % 8;
+      lower = (m + d + h + minuteBranch) % 8;
+      movingRem = (m + d + h + minuteBranch) % 6;
+    } else {
+      upper = (y + m + d) % 8;
+      lower = (y + m + d + h) % 8;
+      movingRem = (y + m + d + h) % 6;
+    }
+
+    const trigramNames = ['坤', '乾', '兑', '离', '震', '巽', '坎', '艮'];
+    const positionNames = ['', '初爻', '二爻', '三爻', '四爻', '五爻', '上爻'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(_instantMinute
+            ? '农历${lunar[1].abs()}月=$m  ${lunar[2]}日=$d  时${gz.hourZhi}=$h  分支${minuteBranch}'
+            : '年支${gz.yearZhi}=$y  农历${lunar[1].abs()}月=$m  农历${lunar[2]}日=$d  时支${gz.hourZhi}=$h',
+            style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 4),
+        Text('上卦：${trigramNames[upper]}（余数$upper）', style: const TextStyle(fontSize: 13)),
+        Text('下卦：${trigramNames[lower]}（余数$lower）', style: const TextStyle(fontSize: 13)),
+        Text('动爻：${positionNames[movingRem == 0 ? 6 : movingRem]}（余数$movingRem）',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFC62828))),
+      ],
     );
   }
 }

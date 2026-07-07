@@ -29,11 +29,12 @@ const CONFIG = {
 
 // ==================== 当前版本 ====================
 const CURRENT_VERSION = {
-  version: '1.2.3',
-  buildNumber: 73,
+  version: '1.2.4',
+  buildNumber: 84,
   url: '/apk/liuyao-assistant.apk',
   description: '解锁申请流程 + SQLite存储',
   forceUpdate: false,
+  changelog: '1. 新增配色风格设置（冷/暖/中/跟随系统）\n2. 手动指定爻象模式\n3. 按时间起卦功能\n4. 配色风格实时切换\n5. 管理工具已解锁列表显示申请时间\n6. 神煞计算改为按日支查、咸池改桃花\n7. 时间起卦：节气月偏移、即时时分起卦\n8. 农历数据改用 lunar 包，日期修正\n9. 拍照导入按钮配色统一\n',
 };
 
 // ==================== 加密工具 ====================
@@ -402,7 +403,7 @@ app.get('/api/unlocked_devices', (req, res) => {
   if (adminKey !== CONFIG.adminKey) return res.status(403).json({ success: false, message: '密钥错误' });
 
   const sql = "SELECT d.device_hash, d.features, d.expire_date, d.unlocked_at, " +
-    "r.remark_encrypted, r.applicant_ip FROM device_unlocks d " +
+    "r.remark_encrypted, r.applicant_ip, r.created_at FROM device_unlocks d " +
     "LEFT JOIN unlock_requests r ON r.device_hash = d.device_hash AND r.status = 'approved' " +
     "ORDER BY d.unlocked_at DESC LIMIT 200";
   const rows = db.prepare(sql).all();
@@ -414,6 +415,7 @@ app.get('/api/unlocked_devices', (req, res) => {
       unlockedAt: r.unlocked_at,
       remark: r.remark_encrypted ? decrypt(r.remark_encrypted) : '',
       applicantIp: r.applicant_ip || '',
+      createdAt: r.created_at || '',
     };
   }) });
 });
