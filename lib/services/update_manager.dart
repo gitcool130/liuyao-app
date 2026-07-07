@@ -66,7 +66,7 @@ class UpdateManager {
 
   /// 检查服务器更新
   static Future<UpdateInfo?> checkUpdate(int currentBuild) async {
-    final info = await FeatureLockService.checkUpdate();
+    final info = await FeatureLockService.checkUpdate(currentBuild: currentBuild);
     if (info == null) return null;
     final serverBuild = info['buildNumber'] as int? ?? 0;
     if (serverBuild <= currentBuild) return null;

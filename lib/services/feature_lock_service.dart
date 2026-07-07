@@ -153,11 +153,12 @@ class FeatureLockService {
   }
 
   /// 检查更新
-  static Future<Map<String, dynamic>?> checkUpdate() async {
+  /// [currentBuild] 客户端当前 build 号，用于筛选增量更新日志
+  static Future<Map<String, dynamic>?> checkUpdate({int currentBuild = 0}) async {
     try {
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 8);
-      final request = await client.getUrl(Uri.parse('$serverUrl/api/check_update'));
+      final request = await client.getUrl(Uri.parse('$serverUrl/api/check_update?currentBuild=$currentBuild'));
       final response = await request.close();
       if (response.statusCode == 200) {
         final body = await response.transform(utf8.decoder).join();

@@ -27,14 +27,22 @@ const CONFIG = {
   apkDir: path.join(__dirname, 'public', 'apk'),
 };
 
+// ==================== 版本更新日志（按build号，递增）====================
+const CHANGELOGS = [
+  { buildNumber: 74, text: '纳甲天干按天干五行显示颜色' },
+  { buildNumber: 75, text: '解锁申请需输入身份确认信息' },
+  { buildNumber: 84, text: '新增配色风格设置、手动指定爻象模式、按时间起卦功能' },
+  { buildNumber: 85, text: '修复节气交月算法（节气表本地时间、时间起卦改用节气月支）' },
+  { buildNumber: 86, text: '更新日志改为按当前版本增量显示' },
+];
+
 // ==================== 当前版本 ====================
 const CURRENT_VERSION = {
   version: '1.2.4',
-  buildNumber: 84,
+  buildNumber: 85,
   url: '/apk/liuyao-assistant.apk',
   description: '解锁申请流程 + SQLite存储',
   forceUpdate: false,
-  changelog: '1. 新增配色风格设置（冷/暖/中/跟随系统）\n2. 手动指定爻象模式\n3. 按时间起卦功能\n4. 配色风格实时切换\n5. 管理工具已解锁列表显示申请时间\n6. 神煞计算改为按日支查、咸池改桃花\n7. 时间起卦：节气月偏移、即时时分起卦\n8. 农历数据改用 lunar 包，日期修正\n9. 拍照导入按钮配色统一\n',
 };
 
 // ==================== 加密工具 ====================
@@ -152,9 +160,17 @@ app.get('/api/check_update', (req, res) => {
     apkMd5 = hash.digest('hex');
   } catch (_) {}
 
+  // 按客户端当前build筛选更新日志
+  const currentBuild = parseInt(req.query.currentBuild) || 0;
+  const changelog = CHANGELOGS
+    .filter(c => c.buildNumber > currentBuild && c.buildNumber <= CURRENT_VERSION.buildNumber)
+    .sort((a, b) => b.buildNumber - a.buildNumber)
+    .map(c => c.text)
+    .join('\n');
+
   res.json({
     success: true,
-    data: { ...CURRENT_VERSION, apkSize, md5: apkMd5 },
+    data: { ...CURRENT_VERSION, apkSize, md5: apkMd5, changelog },
   });
 });
 
