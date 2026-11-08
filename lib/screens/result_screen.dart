@@ -683,12 +683,12 @@ class _ResultScreenState extends State<ResultScreen> {
     sb.writeln(head);
 
     // 2) 宫名 + 卦名
-    final gong = StringBuffer('${ben.gongName ?? ''}宫：${ben.guaName}');
+    final gong = StringBuffer('${ben.gongName ?? ''}：${ben.guaName}');
     final benTag = getGuaChongHeLabel(ben.gua64Index);
     if (benTag.isNotEmpty) gong.write('($benTag)');
     if (bian != null) {
       final t = getGuaChongHeLabel(bian.gua64Index);
-      gong.write('　${bian.gongName ?? ''}宫：${bian.guaName}');
+      gong.write('　${bian.gongName ?? ''}：${bian.guaName}');
       if (t.isNotEmpty) gong.write('($t)');
     }
     sb.writeln(gong);
@@ -1146,7 +1146,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 Flexible(
                   child: Text(
                       record.startMethod == 'ganzhi'
-                          ? record.formattedGanZhi
+                          ? ''
                           : '${record.yearGz}年 $lunarDateStr $hourGz时',
                       style: TextStyle(fontSize: infoFontSize, color: Colors.grey.shade700),
                       textAlign: TextAlign.right, overflow: TextOverflow.ellipsis),
@@ -1183,7 +1183,9 @@ class _ResultScreenState extends State<ResultScreen> {
     final shiKong = XunKongCalculator.getXunKongStr(hourGz);
 
     Widget _pillar(String gz, String kong, bool useColor) {
-      return Expanded(
+      // 固定宽度 + 外层居中：只选月建/日辰时不会一左一右拉开
+      return SizedBox(
+        width: 82,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -1202,12 +1204,12 @@ class _ResultScreenState extends State<ResultScreen> {
     final ben = record.benGua;
     final bian = record.bianGua;
     final benTag = getGuaChongHeLabel(ben.gua64Index);
-    final benLine = '${ben.gongName ?? ''}宫：${ben.guaName}'
+    final benLine = '${ben.gongName ?? ''}：${ben.guaName}'
         '${benTag.isEmpty ? '' : '($benTag)'}';
     final bianTag = bian == null ? '' : getGuaChongHeLabel(bian.gua64Index);
     final bianLine = bian == null
         ? ''
-        : '　之　${bian.gongName ?? ''}宫：${bian.guaName}'
+        : '　之　${bian.gongName ?? ''}：${bian.guaName}'
             '${bianTag.isEmpty ? '' : '($bianTag)'}';
 
     return Card(
@@ -1218,6 +1220,7 @@ class _ResultScreenState extends State<ResultScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (yearGz.isNotEmpty) ...[
                   _pillar('$yearGz年', nianKong, colored),
