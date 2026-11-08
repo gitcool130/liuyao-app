@@ -694,14 +694,7 @@ class _ResultScreenState extends State<ResultScreen> {
     final sb = StringBuffer();
 
     // 1) 干支 + 旬空 + 占问
-    final head = StringBuffer('干支：');
-    if (record.yearGz.isNotEmpty) head.write(' ${record.yearGz}年');
-    if (record.monthGz.isNotEmpty) head.write(' ${record.monthGz}月');
-    head.write('  ${record.dayGz}日');
-    if (record.hourGz.isNotEmpty) head.write('  ${record.hourGz}时');
-    head.write('　(旬空：${record.xunKong})');
-    if (record.question.isNotEmpty) head.write('  占问：${record.question}');
-    sb.writeln(head);
+    sb.writeln(_ganZhiHeadLine(record));
 
     // 2) 宫名 + 卦名
     final gong = StringBuffer('${ben.gongName ?? ''}：${ben.guaName}');
@@ -1187,98 +1180,33 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   /// 构建干支/旬空卡片（位于神煞和YaoTable之间）
+  /// 干支一行：干支 + 旬空 + 占问（默认视图与「古典」首行共用同一套格式）
+  String _ganZhiHeadLine(DivinationRecord record) {
+    final b = StringBuffer('干支：');
+    if (record.yearGz.isNotEmpty) b.write(' ${record.yearGz}年');
+    if (record.monthGz.isNotEmpty) b.write(' ${record.monthGz}月');
+    b.write('  ${record.dayGz}日');
+    if (record.hourGz.isNotEmpty) b.write('  ${record.hourGz}时');
+    b.write('　(旬空：${record.xunKong})');
+    if (record.question.isNotEmpty) b.write('  占问：${record.question}');
+    return b.toString();
+  }
+
+  /// 干支卡片：只显示一行「干支 … 旬空 … 占问」，可选中复制
   Widget _buildGanZhiCard(DivinationRecord record) {
     final settings = context.read<SettingsProvider>().settings;
-    final colored = settings.showColoredGanZhi;
-    final gzSize = settings.ganZhiFontSize;
-    final xkSize = settings.xunKongFontSize;
-    final yearGz = record.yearGz;
-    final monthGz = record.monthGz;
-    final dayGz = record.dayGz;
-    final hourGz = record.hourGz;
-
-    // 分别计算四柱各自的旬空
-    final nianKong = XunKongCalculator.getXunKongStr(yearGz);
-    final yueKong = XunKongCalculator.getXunKongStr(monthGz);
-    final riKong = XunKongCalculator.getXunKongStr(dayGz);
-    final shiKong = XunKongCalculator.getXunKongStr(hourGz);
-
-    Widget _pillar(String gz, String kong, bool useColor) {
-      // 固定宽度 + 外层居中：只选月建/日辰时不会一左一右拉开
-      return SizedBox(
-        width: 82,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            useColor
-                ? _buildColoredPillar(gz, gzSize)
-                : Text(gz, style: TextStyle(fontSize: gzSize, fontWeight: FontWeight.bold, color: const Color(0xFF8B4513))),
-            const SizedBox(height: 2),
-            Text(kong.isEmpty ? '' : kong,
-                style: TextStyle(fontSize: xkSize, color: kong.isEmpty ? Colors.transparent : Colors.grey.shade500)),
-          ],
-        ),
-      );
-    }
-
-    // 卦名与卦宫（与干支行合并在同一个卡片里）
-    final ben = record.benGua;
-    final bian = record.bianGua;
-    final benTag = getGuaChongHeLabel(ben.gua64Index);
-    final benLine = '${ben.gongName ?? ''}：${ben.guaName}'
-        '${benTag.isEmpty ? '' : '($benTag)'}';
-    final bianTag = bian == null ? '' : getGuaChongHeLabel(bian.gua64Index);
-    final bianLine = bian == null
-        ? ''
-        : '　之　${bian.gongName ?? ''}：${bian.guaName}'
-            '${bianTag.isEmpty ? '' : '($bianTag)'}';
-
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (yearGz.isNotEmpty) ...[
-                  _pillar('$yearGz年', nianKong, colored),
-                  const SizedBox(width: 4),
-                ],
-                if (monthGz.isNotEmpty) ...[
-                  _pillar('$monthGz月', yueKong, colored),
-                  const SizedBox(width: 4),
-                ],
-                _pillar('$dayGz日', riKong, colored),
-                if (hourGz.isNotEmpty) ...[
-                  const SizedBox(width: 4),
-                  _pillar('$hourGz时', shiKong, colored),
-                ],
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$benLine$bianLine',
-              style: TextStyle(
-                fontSize: gzSize * 0.72,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF5D4037),
-              ),
-            ),
-            if (record.question.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  '占问：${record.question}',
-                  style: TextStyle(
-                    fontSize: gzSize * 0.66,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ),
-          ],
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: SelectableText(
+          _ganZhiHeadLine(record),
+          style: TextStyle(
+            fontSize: settings.ganZhiFontSize,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF8B4513),
+            height: 1.4,
+          ),
         ),
       ),
     );
