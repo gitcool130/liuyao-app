@@ -99,11 +99,20 @@ jobs:
           if (-not (Test-Path $greenZip)) { throw "绿色版打包失败" }
           Write-Host ("绿色版: {0:N1} MB" -f ((Get-Item $greenZip).Length / 1MB))
 
-          # 5) 便携版：先把内容打成 payload.zip（根目录不带外层文件夹）
+          # 5) 便携版：内容打成 payload.zip（必须在 stage 内部打，否则会带上 stage\ 前缀）
           $payload = "payload.zip"
+          $payloadFull = Join-Path (Get-Location) $payload
           if (Test-Path $payload) { Remove-Item $payload -Force }
-          7z a -tzip -mx=7 -mcu=on $payload "$stage\*" | Out-Null
+          Push-Location $stage
+          7z a -tzip -mx=7 -mcu=on $payloadFull "*" | Out-Null
+          Pop-Location
           Write-Host ("payload: {0:N1} MB" -f ((Get-Item $payload).Length / 1MB))
+
+          # 自查：payload 第一层必须是文件/目录本身，不能是 stage/
+          $names = & 7z l -ba -slt $payload 2>$null | Select-String '^Path = ' | ForEach-Object { ($_ -replace '^Path = ','') }
+          $tops = $names | ForEach-Object { ($_ -split '\\')[0] } | Sort-Object -Unique
+          Write-Host ("payload 第一层: " + ($tops -join ', '))
+          if ($tops -contains 'stage') { throw "payload.zip 里带了 stage/ 前缀" }
 
           # 6) 生成启动器源码（C# 5 语法，兼容 .NET Framework 的 csc）
           $cs = @'
@@ -146,6 +155,22 @@ jobs:
                           ZipFile.ExtractToDirectory(tmp, dir);
                           File.Delete(tmp);
                           File.WriteAllText(tagFile, BuildTag);
+                      }
+
+                      // 兜底：万一解压多了一层目录，就在子目录里找
+                      if (!File.Exists(exe))
+                      {
+                          string[] found = Directory.GetFiles(dir, "六爻助手.exe",
+                              SearchOption.AllDirectories);
+                          if (found.Length > 0)
+                          {
+                              exe = found[0];
+                              dir = Path.GetDirectoryName(exe);
+                          }
+                          else
+                          {
+                              throw new FileNotFoundException("解压后找不到 六爻助手.exe");
+                          }
                       }
 
                       Process.Start(new ProcessStartInfo(exe) { WorkingDirectory = dir });
