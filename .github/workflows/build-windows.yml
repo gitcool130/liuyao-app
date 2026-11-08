@@ -31,6 +31,9 @@ jobs:
       - name: 拉取依赖
         run: flutter pub get
 
+      - name: 单元测试（干支排盘）
+        run: flutter test test/algorithms/ganzhi_paipan_test.dart
+
       - name: 编译 Windows Release
         run: flutter build windows --release
 
@@ -87,9 +90,12 @@ jobs:
           Set-Content -Path (Join-Path $stage "使用说明.txt") -Value $readme -Encoding UTF8
 
           # 4) 绿色版 zip（-mcu=on 强制 UTF-8 文件名，免得中文名乱码）
+          #    在 stage 目录内打，这样压缩包里第一层就是「六爻助手-Windows绿色版」
           $greenZip = "六爻助手-Windows绿色版.zip"
-          if (Test-Path $greenZip) { Remove-Item $greenZip -Force }
-          7z a -tzip -mx=7 -mcu=on $greenZip "stage\$folder" | Out-Null
+          Push-Location stage
+          if (Test-Path "..\$greenZip") { Remove-Item "..\$greenZip" -Force }
+          7z a -tzip -mx=7 -mcu=on "..\$greenZip" $folder | Out-Null
+          Pop-Location
           if (-not (Test-Path $greenZip)) { throw "绿色版打包失败" }
           Write-Host ("绿色版: {0:N1} MB" -f ((Get-Item $greenZip).Length / 1MB))
 
@@ -200,15 +206,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # gh 传中文资产名会被吞掉（六爻助手-便携版.exe 变成 -.exe），
+          # 所以 Release 上用 ASCII 名，中文名保留在工件和压缩包内层目录
+          Copy-Item "六爻助手-Windows绿色版.zip" "liuyao-assistant-windows-folder.zip" -Force
+          Copy-Item "六爻助手-便携版.exe" "liuyao-assistant-portable.exe" -Force
+
           $tag = "build-${{ github.run_number }}"
           $title = "六爻助手 Windows 构建 ${{ github.run_number }}"
           $notes = @'
           ### 下载哪个？
 
-          | 文件 | 说明 |
+          | 文件 | 内容 |
           |---|---|
-          | `六爻助手-Windows绿色版.zip` | 解压后整个文件夹随便放，双击「六爻助手.exe」即用 |
-          | `六爻助手-便携版.exe` | 单个 exe，双击自动解压到本机缓存并启动 |
+          | `liuyao-assistant-windows-folder.zip` | **绿色版**：解压后是一整个 `六爻助手-Windows绿色版` 文件夹，双击里面的 `六爻助手.exe` 即用 |
+          | `liuyao-assistant-portable.exe` | **便携版**：单个 exe，双击自动解压到本机缓存后启动 |
 
           本次包含「干支排盘」：直接指定 年 / 月建 / 日辰 / 时辰，六爻默认全阳，
           点爻画切阴阳、勾「动」为动爻，不依赖公历时间（用于录入古籍卦例、复盘他人卦例）。
@@ -217,8 +228,8 @@ jobs:
           '@
           $notes = $notes -replace '^ {10}', ''
           gh release create $tag `
-            六爻助手-Windows绿色版.zip `
-            六爻助手-便携版.exe `
+            liuyao-assistant-windows-folder.zip `
+            liuyao-assistant-portable.exe `
             --title $title `
             --notes $notes `
             --latest
