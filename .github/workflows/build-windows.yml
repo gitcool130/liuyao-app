@@ -1,4 +1,4 @@
-name: Build Windows Portable
+name: Build Windows (绿色版 + 便携版)
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-windows:
-    name: Windows 绿色版
+    name: Windows 绿色版 / 便携版
     runs-on: windows-latest
 
     steps:
@@ -30,79 +30,161 @@ jobs:
       - name: 编译 Windows Release
         run: flutter build windows --release
 
-      - name: 打包为绿色版
+      - name: 组装 + 打两个包
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
 
-          # 产物目录（新老版本路径不同，都试一下）
-          $candidates = @(
-            "build/windows/x64/runner/Release",
-            "build/windows/runner/Release"
-          )
+          # 1) 找产物目录
+          $candidates = @("build/windows/x64/runner/Release", "build/windows/runner/Release")
           $out = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (-not $out) { throw "找不到编译产物目录" }
           Write-Host "产物目录: $out"
-          Get-ChildItem $out | Select-Object Name, Length | Format-Table
+          Get-ChildItem $out | Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,2)}} | Format-Table
 
-          # 组装绿色版目录
-          $stageRoot = "stage"
+          # 2) 组装绿色版目录
           $folder = "六爻助手-Windows绿色版"
-          $stage = Join-Path $stageRoot $folder
+          $stage  = Join-Path "stage" $folder
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item "$out/*" $stage -Recurse -Force
 
-          # 主程序改名，方便识别
-          if (Test-Path (Join-Path $stage "liuyao_app.exe")) {
-            Rename-Item (Join-Path $stage "liuyao_app.exe") "六爻助手.exe"
-          }
+          $exeOld = Join-Path $stage "liuyao_app.exe"
+          if (-not (Test-Path $exeOld)) { throw "产物里没有 liuyao_app.exe" }
+          Rename-Item $exeOld "六爻助手.exe"
 
-          # 附一份说明
-          $readme = @"
-          六爻助手  Windows 绿色版
-          ============================
+          # 3) 使用说明
+          $sha = "${{ github.sha }}".Substring(0,7)
+          $readme = @'
+          六爻助手  Windows 版
+          ====================
 
-          这是免安装版：整个文件夹拷到哪里都能用，不需要安装。
-
-          使用
-          ----
-          1. 双击「六爻助手.exe」运行。
-          2. 首次运行若提示「未知发布者」，点「更多信息 → 仍要运行」。
-          3. 不要单独移动 exe —— data 文件夹要和它放在一起。
+          【绿色版】解压后整个文件夹随便放，双击「六爻助手.exe」即可，不用安装。
+          【便携版】单个 exe，双击会自动解压到本机缓存目录并启动，不写注册表。
 
           起卦方式
           --------
-          · 手动排盘   输入六次摇卦的背面数
-          · 干支排盘   直接指定年/月建/日辰/时辰，再逐爻点阴阳与动，
-                       用于录入古籍卦例或复盘他人卦例（不依赖公历时间）
-          · 在线起卦   （仅手机版）
+          手动排盘   输入六次摇卦的背面数
+          干支排盘   直接指定 年 / 月建 / 日辰 / 时辰，六爻默认全阳，
+                     点爻画切阴阳、勾「动」即为动爻。用于录入古籍卦例、
+                     复盘他人卦例（不依赖公历时间）
+          在线起卦   仅手机版
 
           桌面版说明
           ----------
-          · 摇一摇、拍照 OCR、内置论坛浏览器依赖手机传感器/相机/WebView，
-            桌面版没有对应实现，点击会提示「桌面版暂不支持」。
-          · 数据保存在 %USERPROFILE%\Documents\liuyao_records.db，
+          * 摇一摇、拍照 OCR、内置论坛浏览器依赖手机传感器/相机/WebView，
+            桌面端点击会提示「桌面版暂不支持」。
+          * 排盘记录保存在 %USERPROFILE%\Documents\liuyao_records.db
             备份或换机时复制这个文件即可。
 
-          构建信息
-          --------
-          本包由 GitHub Actions 自动编译，Flutter ${{ env.FLUTTER_VERSION || 'stable' }}，
-          提交 ${{ github.sha }}。
-          "@
-          $readme = $readme -replace '(?m)^\s{10}', ''
+          若提示「未知发布者」，点「更多信息 → 仍要运行」。
+          不要单独移动 exe，data 文件夹要和它放在一起。
+          '@
+          $readme = $readme -replace '^ {10}', ''
           Set-Content -Path (Join-Path $stage "使用说明.txt") -Value $readme -Encoding UTF8
 
-          # 压缩
-          $zip = "liuyao-app-windows-portable.zip"
-          if (Test-Path $zip) { Remove-Item $zip -Force }
-          7z a -tzip -mx=7 $zip ".\$stageRoot\$folder" | Out-Null
-          if (-not (Test-Path $zip)) { throw "打包失败" }
-          Write-Host ("压缩包大小: {0:N1} MB" -f ((Get-Item $zip).Length / 1MB))
-          Get-ChildItem $zip
+          # 4) 绿色版 zip（-mcu=on 强制 UTF-8 文件名，免得中文名乱码）
+          $greenZip = "六爻助手-Windows绿色版.zip"
+          if (Test-Path $greenZip) { Remove-Item $greenZip -Force }
+          7z a -tzip -mx=7 -mcu=on $greenZip "stage\$folder" | Out-Null
+          if (-not (Test-Path $greenZip)) { throw "绿色版打包失败" }
+          Write-Host ("绿色版: {0:N1} MB" -f ((Get-Item $greenZip).Length / 1MB))
 
-      - name: 上传产物
+          # 5) 便携版：先把内容打成 payload.zip（根目录不带外层文件夹）
+          $payload = "payload.zip"
+          if (Test-Path $payload) { Remove-Item $payload -Force }
+          7z a -tzip -mx=7 -mcu=on $payload "$stage\*" | Out-Null
+          Write-Host ("payload: {0:N1} MB" -f ((Get-Item $payload).Length / 1MB))
+
+          # 6) 生成启动器源码（C# 5 语法，兼容 .NET Framework 的 csc）
+          $cs = @'
+          using System;
+          using System.Diagnostics;
+          using System.IO;
+          using System.IO.Compression;
+          using System.Reflection;
+          using System.Windows.Forms;
+
+          static class Program
+          {
+              const string BuildTag = "__TAG__";
+
+              [STAThread]
+              static void Main()
+              {
+                  try
+                  {
+                      string dir = Path.Combine(
+                          Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                          "LiuYaoAssistant");
+                      string exe = Path.Combine(dir, "六爻助手.exe");
+                      string tagFile = Path.Combine(dir, ".build");
+
+                      bool needExtract = !File.Exists(exe) || !File.Exists(tagFile)
+                                         || File.ReadAllText(tagFile).Trim() != BuildTag;
+
+                      if (needExtract)
+                      {
+                          if (Directory.Exists(dir)) Directory.Delete(dir, true);
+                          Directory.CreateDirectory(dir);
+
+                          string tmp = Path.Combine(Path.GetTempPath(),
+                              "liuyao_" + Guid.NewGuid().ToString("N") + ".zip");
+                          Stream src = Assembly.GetExecutingAssembly().GetManifestResourceStream("payload.zip");
+                          using (FileStream fs = File.Create(tmp)) { src.CopyTo(fs); }
+                          src.Close();
+
+                          ZipFile.ExtractToDirectory(tmp, dir);
+                          File.Delete(tmp);
+                          File.WriteAllText(tagFile, BuildTag);
+                      }
+
+                      Process.Start(new ProcessStartInfo(exe) { WorkingDirectory = dir });
+                  }
+                  catch (Exception e)
+                  {
+                      MessageBox.Show("启动失败：" + e.Message + "\r\n\r\n可改用绿色版（解压文件夹后运行）。",
+                          "六爻助手", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                  }
+              }
+          }
+          '@
+          $cs = $cs -replace '^ {10}', ''
+          $cs = $cs.Replace('__TAG__', $sha)
+          Set-Content -Path launcher.cs -Value $cs -Encoding UTF8
+
+          # 7) 编译单文件便携版
+          $csc = Join-Path $env:WINDIR "Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          if (-not (Test-Path $csc)) {
+            $csc = Join-Path $env:WINDIR "Microsoft.NET\Framework\v4.0.30319\csc.exe"
+          }
+          if (-not (Test-Path $csc)) { throw "找不到 csc.exe" }
+          $portable = "六爻助手-便携版.exe"
+          & $csc /nologo /target:winexe /platform:anycpu /optimize+ `
+                 /out:$portable `
+                 /resource:payload.zip,payload.zip `
+                 /reference:System.dll `
+                 /reference:System.Core.dll `
+                 /reference:System.IO.Compression.dll `
+                 /reference:System.IO.Compression.FileSystem.dll `
+                 /reference:System.Windows.Forms.dll `
+                 launcher.cs
+          if ($LASTEXITCODE -ne 0) { throw "便携版编译失败" }
+          if (-not (Test-Path $portable)) { throw "便携版没生成" }
+          Write-Host ("便携版: {0:N1} MB" -f ((Get-Item $portable).Length / 1MB))
+
+          # 8) 汇总
+          Get-ChildItem $greenZip, $portable | Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,1)}} | Format-Table
+
+      - name: 上传绿色版
         uses: actions/upload-artifact@v4
         with:
-          name: liuyao-app-windows-portable
-          path: liuyao-app-windows-portable.zip
+          name: win-portable-folder
+          path: 六爻助手-Windows绿色版.zip
+          retention-days: 30
+
+      - name: 上传便携版
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-single-exe
+          path: 六爻助手-便携版.exe
           retention-days: 30

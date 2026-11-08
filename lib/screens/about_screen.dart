@@ -539,7 +539,7 @@ class AboutScreen extends StatelessWidget {
             // 版本号
             Center(
               child: Text(
-                'v$appVersion ($appBuildNumber)',
+                'v$kAppVersion ($kAppBuildNumber)',
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
               ),
             ),
