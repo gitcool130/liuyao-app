@@ -1158,11 +1158,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 padding: const EdgeInsets.only(top: 2),
                 child: Text('节气：$jieQiStr', style: TextStyle(fontSize: infoFontSize, color: Colors.orange.shade700)),
               ),
-            if (record.question.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text('问：${record.question}', style: TextStyle(fontSize: infoFontSize, fontStyle: FontStyle.italic)),
-              ),
+            // 占问已并入下方干支/卦名卡片，这里不再重复
           ],
         ),
       ),
@@ -1247,6 +1243,17 @@ class _ResultScreenState extends State<ResultScreen> {
                 color: const Color(0xFF5D4037),
               ),
             ),
+            if (record.question.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  '占问：${record.question}',
+                  style: TextStyle(
+                    fontSize: gzSize * 0.66,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
