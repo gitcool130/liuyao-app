@@ -5,6 +5,11 @@ on:
   push:
     branches: [ main, master ]
 
+# 需要在每次构建前清理上一轮的编译产物
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   build-windows:
     name: Windows 绿色版 / 便携版
@@ -23,6 +28,21 @@ jobs:
 
       - name: 版本信息
         run: flutter --version
+
+      # 只在构建期临时存放，跑完就清；这里先把上一轮残留删干净，避免在仓库里堆积产物
+      - name: 清理上一轮编译产物
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $repo = "${{ github.repository }}"
+          $ids = gh api "repos/$repo/actions/artifacts?per_page=100" --paginate --jq '.artifacts[].id' 2>$null
+          if (-not $ids) { "没有历史产物"; exit 0 }
+          foreach ($id in $ids) {
+            gh api -X DELETE "repos/$repo/actions/artifacts/$id" 2>$null
+            Write-Host "删除 artifact $id"
+          }
 
       - name: 拉取依赖
         run: flutter pub get
@@ -211,11 +231,11 @@ jobs:
         with:
           name: win-portable-folder
           path: 六爻助手-Windows绿色版.zip
-          retention-days: 30
+          retention-days: 1
 
       - name: 上传便携版
         uses: actions/upload-artifact@v4
         with:
           name: win-single-exe
           path: 六爻助手-便携版.exe
-          retention-days: 30
+          retention-days: 1
