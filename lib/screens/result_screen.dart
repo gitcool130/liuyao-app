@@ -520,7 +520,7 @@ class _ResultScreenState extends State<ResultScreen> {
             const SizedBox(height: 4),
 
             // 辅助开关栏（移到YaoTable下方）
-            _buildHelperSwitches(),
+            _buildHelperSwitches(record),
 
             if (_showSanHe) ...[
               const SizedBox(height: 4),
@@ -543,7 +543,7 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   /// 构建辅助开关栏
-  Widget _buildHelperSwitches() {
+  Widget _buildHelperSwitches(DivinationRecord record) {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -594,6 +594,27 @@ class _ResultScreenState extends State<ResultScreen> {
               value: _showClassic,
               onChanged: (v) => setState(() => _showClassic = v),
               activeColor: const Color(0xFF5D4037),
+            ),
+            // 常驻的复制入口：不勾「古典」也能把整盘按古籍版式复制走
+            InkWell(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: _classicText(record)));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('已复制卦盘'), duration: Duration(seconds: 1)),
+                );
+              },
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.copy, size: 14, color: Color(0xFF5D4037)),
+                    SizedBox(width: 4),
+                    Text('复制盘面', style: TextStyle(fontSize: 12, color: Color(0xFF5D4037))),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
