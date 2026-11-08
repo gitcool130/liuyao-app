@@ -601,9 +601,9 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  /// 古典盘式：六神 / 伏神 / 本卦 / 变卦 四列，照古籍版式排列
+  /// 古典盘式：按古籍版式排成纯文本，可自由选中/复制
   Widget _buildClassicCard(DivinationRecord record) {
-    final rows = _classicRows(record);
+    final text = _classicText(record);
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -614,7 +614,7 @@ class _ResultScreenState extends State<ResultScreen> {
             Row(
               children: [
                 const Text(
-                  '古典盘式',
+                  '古典',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF5D4037)),
                 ),
                 const Spacer(),
@@ -625,9 +625,9 @@ class _ResultScreenState extends State<ResultScreen> {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: _classicLines(record).join('\n')));
+                    Clipboard.setData(ClipboardData(text: text));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('已复制古典盘式'), duration: Duration(seconds: 1)),
+                      const SnackBar(content: Text('已复制卦盘'), duration: Duration(seconds: 1)),
                     );
                   },
                   icon: const Icon(Icons.copy, size: 14),
@@ -635,89 +635,88 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
               ],
             ),
-            const Divider(height: 10),
-            // 表头
-            Row(
-              children: const [
-                SizedBox(width: 40, child: Text('六神', style: TextStyle(fontSize: 12, color: Colors.grey))),
-                SizedBox(width: 52, child: Text('伏神', style: TextStyle(fontSize: 12, color: Colors.grey))),
-                Expanded(child: Text('【本　　卦】', style: TextStyle(fontSize: 12, color: Colors.grey))),
-                Expanded(child: Text('【变　　卦】', style: TextStyle(fontSize: 12, color: Colors.grey))),
-              ],
-            ),
-            const SizedBox(height: 2),
-            // 上爻 → 初爻
-            for (final r in rows)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 1),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 40,
-                      child: Text(r.liushen,
-                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF5D4037), fontWeight: FontWeight.w600)),
-                    ),
-                    SizedBox(
-                      width: 52,
-                      child: Text(r.fushen,
-                          style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
-                    ),
-                    Expanded(
-                      child: Text(r.ben,
-                          style: const TextStyle(fontSize: 12.5, height: 1.5)),
-                    ),
-                    Expanded(
-                      child: Text(r.bian,
-                          style: TextStyle(fontSize: 12.5, height: 1.5, color: Colors.grey.shade800)),
-                    ),
-                  ],
+            const Divider(height: 8),
+            // 文本可长按选中复制；窄屏可左右滑动
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SelectableText(
+                text,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.62,
+                  color: Color(0xFF3E2723),
                 ),
               ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// 古典盘式的六行数据（上爻在前）
-  List<({String liushen, String fushen, String ben, String bian})> _classicRows(
-      DivinationRecord record) {
-    final out = <({String liushen, String fushen, String ben, String bian})>[];
-    for (int i = record.yaoLines.length - 1; i >= 0; i--) {
-      final y = record.yaoLines[i];
-      final body = '${y.liuQin ?? ''}${y.tianGan ?? ''}${y.ganZhi ?? ''}${y.wuXing ?? ''}';
-      final mark = y.isShi == true ? '世' : (y.isYing == true ? '应' : '');
-      final dong = y.isDong ? (y.isYang ? '○→' : '×→') : '';
-      final ben = '$body${y.isYang ? '━━━' : '━　━'}$mark$dong';
-
-      String bian = '';
-      if (y.isDong && (y.bianGanZhi ?? '').isNotEmpty) {
-        final bBody = '${y.bianLiuQin ?? ''}${y.bianTianGan ?? ''}${y.bianGanZhi ?? ''}${y.bianWuXing ?? ''}';
-        // 变爻阴阳与本爻相反
-        bian = '$bBody${y.isYang ? '━　━' : '━━━'}';
-      }
-
-      out.add((liushen: y.liuShen ?? '', fushen: y.fuShen ?? '', ben: ben, bian: bian));
-    }
-    return out;
-  }
-
-  /// 古典盘式的等宽文本（复制用，全角空格对齐，粘进 Word 选宋体即对齐）
-  List<String> _classicLines(DivinationRecord record) {
+  /// 生成古典盘式文本
+  ///
+  /// 版式（与古籍一致，全角空格对齐）：
+  ///   干支： 戌月  丁亥日　(旬空：午未)  占问：黄金策
+  ///   乾宫：乾为天(六冲)
+  ///   六神　伏　　神　　【本　　卦】
+  ///   青龙　　　　　　　父母壬戌土━━━　世
+  ///   ...
+  String _classicText(DivinationRecord record) {
     String pad(String s, int w) {
       final n = s.runes.length;
-      if (n >= w) return s;
-      return s + '　' * (w - n);
+      return n >= w ? s : s + '　' * (w - n);
     }
 
-    final lines = <String>['六神　伏　　神　　【本　　卦】　　　　　【变　　　卦】'];
-    for (final r in _classicRows(record)) {
-      lines.add(
-        '${pad(r.liushen, 2)}　　${pad(r.fushen, 5)}　${pad(r.ben, 11)}　${r.bian}',
-      );
+    final ben = record.benGua;
+    final bian = record.bianGua;
+    final sb = StringBuffer();
+
+    // 1) 干支 + 旬空 + 占问
+    final head = StringBuffer('干支：');
+    if (record.yearGz.isNotEmpty) head.write(' ${record.yearGz}年');
+    if (record.monthGz.isNotEmpty) head.write(' ${record.monthGz}月');
+    head.write('  ${record.dayGz}日');
+    if (record.hourGz.isNotEmpty) head.write('  ${record.hourGz}时');
+    head.write('　(旬空：${record.xunKong})');
+    if (record.question.isNotEmpty) head.write('  占问：${record.question}');
+    sb.writeln(head);
+
+    // 2) 宫名 + 卦名
+    final gong = StringBuffer('${ben.gongName ?? ''}宫：${ben.guaName}');
+    final benTag = getGuaChongHeLabel(ben.gua64Index);
+    if (benTag.isNotEmpty) gong.write('($benTag)');
+    if (bian != null) {
+      final t = getGuaChongHeLabel(bian.gua64Index);
+      gong.write('　${bian.gongName ?? ''}宫：${bian.guaName}');
+      if (t.isNotEmpty) gong.write('($t)');
     }
-    return lines;
+    sb.writeln(gong);
+
+    // 3) 表头
+    final hdr = StringBuffer('六神　伏　　神　　【本　　卦】');
+    if (bian != null) hdr.write('　　　　【变　　　卦】');
+    sb.writeln(hdr);
+
+    // 4) 六爻：上爻 → 初爻
+    for (int i = record.yaoLines.length - 1; i >= 0; i--) {
+      final y = record.yaoLines[i];
+      final shen = pad(y.liuShen ?? '', 2);
+      final fu = pad((y.fuShen ?? '').isEmpty ? '' : y.fuShen!, 6);
+      final body = '${y.liuQin ?? ''}${y.tianGan ?? ''}${y.ganZhi ?? ''}${y.wuXing ?? ''}';
+      final bar = y.isYang ? '━━━' : '━　━';
+      final mark = y.isShi == true ? '世' : (y.isYing == true ? '应' : '');
+      final dong = y.isDong ? (y.isYang ? '○→' : '×→') : '';
+      final line = StringBuffer('$shen　$fu$body$bar　${pad('$mark$dong', 3)}');
+      if (y.isDong && (y.bianGanZhi ?? '').isNotEmpty) {
+        final bb = '${y.bianLiuQin ?? ''}${y.bianTianGan ?? ''}${y.bianGanZhi ?? ''}${y.bianWuXing ?? ''}';
+        // 变爻阴阳与本爻相反
+        line.write('$bb${y.isYang ? '━　━' : '━━━'}');
+      }
+      sb.writeln(line.toString().trimRight());
+    }
+
+    return sb.toString().trimRight();
   }
 
   /// 构建单个开关（使用小勾选方框）
