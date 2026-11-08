@@ -478,7 +478,9 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
+      // SelectionArea：整页文字都能长按选中复制（含六爻表格），桌面端还可 Ctrl+A
+      body: SelectionArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(6),  // 减小整体 padding
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -537,6 +539,7 @@ class _ResultScreenState extends State<ResultScreen> {
             // 解卦输入区
             _buildInterpretationCard(record),
           ],
+        ),
         ),
       ),
     );
