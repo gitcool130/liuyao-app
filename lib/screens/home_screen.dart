@@ -532,27 +532,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 12),
 
-            // 干支排盘按钮：直接按「月建 + 日辰」起局，不依赖公历
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const GanZhiPaiPanScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.event_note),
-              label: Text('干支排盘', style: TextStyle(fontSize: 16)),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                backgroundColor: const Color(0xFF5D4037),
-                foregroundColor: Colors.white,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
             // 拍照导入按钮（略带反差的配色）
             ElevatedButton.icon(
               onPressed: () {
@@ -599,134 +578,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVipSection() {
-    final hasUnlocked = _unlockedFeatures.isNotEmpty;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.stars, size: 20, color: Colors.amber.shade700),
+            Icon(Icons.auto_awesome_mosaic, size: 20, color: Colors.amber.shade700),
             const SizedBox(width: 8),
             const Text(
-              '易青岚学员专享',
+              '无影专用排盘',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5D4037),
               ),
             ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const UnlockScreen()),
-                );
-                _loadUnlocked();
-              },
-              icon: Icon(Icons.lock_open, size: 14, color: Colors.amber.shade700),
-              label: Text(
-                hasUnlocked ? '已解锁' : '去解锁',
-                style: TextStyle(fontSize: 12, color: hasUnlocked ? Colors.green : Colors.amber.shade700),
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 12),
-
-        // 神煞详解
-        _buildVipItem(
-          icon: Icons.auto_awesome,
-          title: '神煞详解',
-          desc: '神煞含义详解与吉凶分析',
-          unlocked: _unlockedFeatures.contains('F005'),
-          color: Colors.purple,
-          onTap: _unlockedFeatures.contains('F005')
-              ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShenshaDetailScreen()))
-              : null,
-        ),
-
-        const SizedBox(height: 8),
-
-        // 高级课笔记
-        _buildVipItem(
-          icon: Icons.menu_book,
-          title: '易青岚高级课笔记',
-          desc: '40课时六爻进阶课程全文',
-          unlocked: _unlockedFeatures.contains('F006'),
-          color: Colors.brown,
-          onTap: _unlockedFeatures.contains('F006')
-              ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CourseNotesScreen()))
-              : null,
-        ),
-
-        const SizedBox(height: 8),
-
-        // 易青岚论坛
-        _buildVipItem(
-          icon: Icons.forum,
-          title: '易青岚论坛',
-          desc: '访问易青岚六爻学习社区',
-          unlocked: _unlockedFeatures.contains('F007'),
-          color: Colors.blue,
-          onTap: _unlockedFeatures.contains('F007')
-              ? () {
-                  if (isDesktop) {
-                    _unsupported('易青岚论坛（内置浏览器）');
-                    return;
-                  }
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const BrowserScreen()));
-                }
-              : null,
-        ),
-
-        if (!hasUnlocked)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              '输入验证码解锁学员专享功能',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+        Card(
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            leading: const Icon(Icons.event_note, color: Color(0xFF5D4037), size: 28),
+            title: const Text(
+              '干支排盘',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
+            ),
+            subtitle: Text(
+              '按年 / 月建 / 日辰 / 时辰起局，用于录入古籍卦例',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: Color(0xFF5D4037)),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GanZhiPaiPanScreen()),
             ),
           ),
+        ),
       ],
-    );
-  }
-
-  Widget _buildVipItem({
-    required IconData icon,
-    required String title,
-    required String desc,
-    required bool unlocked,
-    required Color color,
-    VoidCallback? onTap,
-  }) {
-    return Card(
-      color: unlocked ? null : Colors.grey.shade100,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        leading: Icon(
-          icon,
-          color: unlocked ? color : Colors.grey,
-          size: 28,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: unlocked ? Colors.black87 : Colors.grey,
-          ),
-        ),
-        subtitle: Text(
-          desc,
-          style: TextStyle(fontSize: 12, color: unlocked ? Colors.grey.shade600 : Colors.grey.shade400),
-        ),
-        trailing: unlocked
-            ? const Icon(Icons.chevron_right, color: Color(0xFF5D4037))
-            : const Icon(Icons.lock, color: Colors.grey, size: 20),
-        onTap: onTap,
-      ),
     );
   }
 }

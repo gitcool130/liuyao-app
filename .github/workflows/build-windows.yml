@@ -5,10 +5,6 @@ on:
   push:
     branches: [ main, master ]
 
-# 发布 Release 需要写权限
-permissions:
-  contents: write
-
 jobs:
   build-windows:
     name: Windows 绿色版 / 便携版
@@ -223,38 +219,3 @@ jobs:
           name: win-single-exe
           path: 六爻助手-便携版.exe
           retention-days: 30
-
-      # artifact 走 Azure blob，国内下载只有 20KB/s；
-      # Release 资源走 objects.githubusercontent.com，快十几倍，所以再发一份
-      - name: 发布到 Release
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # gh 传中文资产名会被吞掉（六爻助手-便携版.exe 变成 -.exe），
-          # 所以 Release 上用 ASCII 名，中文名保留在工件和压缩包内层目录
-          Copy-Item "六爻助手-Windows绿色版.zip" "liuyao-assistant-windows-folder.zip" -Force
-          Copy-Item "六爻助手-便携版.exe" "liuyao-assistant-portable.exe" -Force
-
-          $tag = "build-${{ github.run_number }}"
-          $title = "六爻助手 Windows 构建 ${{ github.run_number }}"
-          $notes = @'
-          ### 下载哪个？
-
-          | 文件 | 内容 |
-          |---|---|
-          | `liuyao-assistant-windows-folder.zip` | **绿色版**：解压后是一整个 `六爻助手-Windows绿色版` 文件夹，双击里面的 `六爻助手.exe` 即用 |
-          | `liuyao-assistant-portable.exe` | **便携版**：单个 exe，双击自动解压到本机缓存后启动 |
-
-          本次包含「干支排盘」：直接指定 年 / 月建 / 日辰 / 时辰，六爻默认全阳，
-          点爻画切阴阳、勾「动」为动爻，不依赖公历时间（用于录入古籍卦例、复盘他人卦例）。
-
-          桌面端不支持摇一摇、拍照 OCR、内置论坛浏览器（依赖手机传感器/相机/WebView），点击会提示。
-          '@
-          $notes = $notes -replace '^ {10}', ''
-          gh release create $tag `
-            liuyao-assistant-windows-folder.zip `
-            liuyao-assistant-portable.exe `
-            --title $title `
-            --notes $notes `
-            --latest

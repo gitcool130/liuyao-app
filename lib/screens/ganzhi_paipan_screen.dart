@@ -41,6 +41,9 @@ class _GanZhiPaiPanScreenState extends State<GanZhiPaiPanScreen> {
 
   static const List<String> _positionNames = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'];
 
+  /// 爻画颜色
+  static const Color _yaoColor = Color(0xFF5D4037);
+
   /// 时辰标签
   static const Map<String, String> _shiChenLabels = {
     '子': '子时 23-1', '丑': '丑时 1-3', '寅': '寅时 3-5', '卯': '卯时 5-7',
@@ -326,27 +329,35 @@ class _GanZhiPaiPanScreenState extends State<GanZhiPaiPanScreen> {
             child: Text(_positionNames[i],
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           ),
-          // 爻画：点一下切阴阳
+          // 爻画：点一下切阴阳。阳爻整条、阴爻两段，两者总宽一致，才对得上卦象
           Expanded(
             child: InkWell(
               onTap: () => _setYao(i, yang: !yang),
               borderRadius: BorderRadius.circular(4),
               child: Container(
-                height: 30,
+                height: 34,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: yang ? const Color(0xFF8B4513).withValues(alpha: 0.08) : Colors.blueGrey.withValues(alpha: 0.08),
+                  color: yang
+                      ? const Color(0xFF8B4513).withValues(alpha: 0.07)
+                      : const Color(0xFF455A64).withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(width: 72, height: 8, color: const Color(0xFF5D4037)),
-                    if (!yang) ...[
-                      const SizedBox(width: 18),
-                      Container(width: 72, height: 8, color: const Color(0xFF5D4037)),
-                    ],
-                  ],
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 9,
+                    child: yang
+                        ? Container(color: _yaoColor)
+                        : Row(
+                            children: [
+                              Expanded(child: Container(color: _yaoColor)),
+                              const SizedBox(width: 22),
+                              Expanded(child: Container(color: _yaoColor)),
+                            ],
+                          ),
+                  ),
                 ),
               ),
             ),

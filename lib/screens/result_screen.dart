@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 import '../models/divination_record.dart';
 import '../providers/divination_provider.dart';
@@ -46,6 +47,7 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _showSheng = false;          // 生
   bool _showKe = false;             // 克
   bool _showSanHe = false;          // 三合局
+  bool _showClassic = false;        // 古典盘式
 
   @override
   void initState() {
@@ -525,6 +527,11 @@ class _ResultScreenState extends State<ResultScreen> {
               _buildSanHeDisplay(record),
             ],
 
+            if (_showClassic) ...[
+              const SizedBox(height: 4),
+              _buildClassicCard(record),
+            ],
+
             const SizedBox(height: 4),
 
             // 解卦输入区
@@ -582,10 +589,135 @@ class _ResultScreenState extends State<ResultScreen> {
               onChanged: (v) => setState(() => _showSanHe = v),
               activeColor: Colors.teal,
             ),
+            _buildSwitch(
+              label: '古典',
+              value: _showClassic,
+              onChanged: (v) => setState(() => _showClassic = v),
+              activeColor: const Color(0xFF5D4037),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  /// 古典盘式：六神 / 伏神 / 本卦 / 变卦 四列，照古籍版式排列
+  Widget _buildClassicCard(DivinationRecord record) {
+    final rows = _classicRows(record);
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  '古典盘式',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF5D4037)),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: _classicLines(record).join('\n')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('已复制古典盘式'), duration: Duration(seconds: 1)),
+                    );
+                  },
+                  icon: const Icon(Icons.copy, size: 14),
+                  label: const Text('复制', style: TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+            const Divider(height: 10),
+            // 表头
+            Row(
+              children: const [
+                SizedBox(width: 40, child: Text('六神', style: TextStyle(fontSize: 12, color: Colors.grey))),
+                SizedBox(width: 52, child: Text('伏神', style: TextStyle(fontSize: 12, color: Colors.grey))),
+                Expanded(child: Text('【本　　卦】', style: TextStyle(fontSize: 12, color: Colors.grey))),
+                Expanded(child: Text('【变　　卦】', style: TextStyle(fontSize: 12, color: Colors.grey))),
+              ],
+            ),
+            const SizedBox(height: 2),
+            // 上爻 → 初爻
+            for (final r in rows)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      child: Text(r.liushen,
+                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF5D4037), fontWeight: FontWeight.w600)),
+                    ),
+                    SizedBox(
+                      width: 52,
+                      child: Text(r.fushen,
+                          style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
+                    ),
+                    Expanded(
+                      child: Text(r.ben,
+                          style: const TextStyle(fontSize: 12.5, height: 1.5)),
+                    ),
+                    Expanded(
+                      child: Text(r.bian,
+                          style: TextStyle(fontSize: 12.5, height: 1.5, color: Colors.grey.shade800)),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 古典盘式的六行数据（上爻在前）
+  List<({String liushen, String fushen, String ben, String bian})> _classicRows(
+      DivinationRecord record) {
+    final out = <({String liushen, String fushen, String ben, String bian})>[];
+    for (int i = record.yaoLines.length - 1; i >= 0; i--) {
+      final y = record.yaoLines[i];
+      final body = '${y.liuQin ?? ''}${y.tianGan ?? ''}${y.ganZhi ?? ''}${y.wuXing ?? ''}';
+      final mark = y.isShi == true ? '世' : (y.isYing == true ? '应' : '');
+      final dong = y.isDong ? (y.isYang ? '○→' : '×→') : '';
+      final ben = '$body${y.isYang ? '━━━' : '━　━'}$mark$dong';
+
+      String bian = '';
+      if (y.isDong && (y.bianGanZhi ?? '').isNotEmpty) {
+        final bBody = '${y.bianLiuQin ?? ''}${y.bianTianGan ?? ''}${y.bianGanZhi ?? ''}${y.bianWuXing ?? ''}';
+        // 变爻阴阳与本爻相反
+        bian = '$bBody${y.isYang ? '━　━' : '━━━'}';
+      }
+
+      out.add((liushen: y.liuShen ?? '', fushen: y.fuShen ?? '', ben: ben, bian: bian));
+    }
+    return out;
+  }
+
+  /// 古典盘式的等宽文本（复制用，全角空格对齐，粘进 Word 选宋体即对齐）
+  List<String> _classicLines(DivinationRecord record) {
+    String pad(String s, int w) {
+      final n = s.runes.length;
+      if (n >= w) return s;
+      return s + '　' * (w - n);
+    }
+
+    final lines = <String>['六神　伏　　神　　【本　　卦】　　　　　【变　　　卦】'];
+    for (final r in _classicRows(record)) {
+      lines.add(
+        '${pad(r.liushen, 2)}　　${pad(r.fushen, 5)}　${pad(r.ben, 11)}　${r.bian}',
+      );
+    }
+    return lines;
   }
 
   /// 构建单个开关（使用小勾选方框）
@@ -1071,25 +1203,51 @@ class _ResultScreenState extends State<ResultScreen> {
       );
     }
 
+    // 卦名与卦宫（与干支行合并在同一个卡片里）
+    final ben = record.benGua;
+    final bian = record.bianGua;
+    final benTag = getGuaChongHeLabel(ben.gua64Index);
+    final benLine = '${ben.gongName ?? ''}宫：${ben.guaName}'
+        '${benTag.isEmpty ? '' : '($benTag)'}';
+    final bianTag = bian == null ? '' : getGuaChongHeLabel(bian.gua64Index);
+    final bianLine = bian == null
+        ? ''
+        : '　之　${bian.gongName ?? ''}宫：${bian.guaName}'
+            '${bianTag.isEmpty ? '' : '($bianTag)'}';
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (yearGz.isNotEmpty) ...[
-              _pillar('$yearGz年', nianKong, colored),
-              const SizedBox(width: 4),
-            ],
-            if (monthGz.isNotEmpty) ...[
-              _pillar('$monthGz月', yueKong, colored),
-              const SizedBox(width: 4),
-            ],
-            _pillar('$dayGz日', riKong, colored),
-            if (hourGz.isNotEmpty) ...[
-              const SizedBox(width: 4),
-              _pillar('$hourGz时', shiKong, colored),
-            ],
+            Row(
+              children: [
+                if (yearGz.isNotEmpty) ...[
+                  _pillar('$yearGz年', nianKong, colored),
+                  const SizedBox(width: 4),
+                ],
+                if (monthGz.isNotEmpty) ...[
+                  _pillar('$monthGz月', yueKong, colored),
+                  const SizedBox(width: 4),
+                ],
+                _pillar('$dayGz日', riKong, colored),
+                if (hourGz.isNotEmpty) ...[
+                  const SizedBox(width: 4),
+                  _pillar('$hourGz时', shiKong, colored),
+                ],
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$benLine$bianLine',
+              style: TextStyle(
+                fontSize: gzSize * 0.72,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF5D4037),
+              ),
+            ),
           ],
         ),
       ),
