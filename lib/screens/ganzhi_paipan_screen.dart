@@ -308,7 +308,7 @@ class _GanZhiPaiPanScreenState extends State<GanZhiPaiPanScreen> {
             for (int i = 5; i >= 0; i--) _buildYaoRow(i),
             const Divider(height: 20),
             Text(
-              '点爻画切换阴阳，勾「动」即为动爻（阳动○／阴动×）',
+              '点爻画切换阴阳；点右侧「静/动」把该爻设为动爻（阳动○／阴动×）',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
           ],
@@ -362,22 +362,33 @@ class _GanZhiPaiPanScreenState extends State<GanZhiPaiPanScreen> {
               ),
             ),
           ),
-          SizedBox(
-            width: 46,
-            child: Text(
-              dong ? (yang ? '○动' : '×动') : '静',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: dong ? FontWeight.bold : FontWeight.normal,
-                color: dong ? const Color(0xFFC62828) : Colors.grey,
+          const SizedBox(width: 8),
+          // 静/动：点这一块切换，比勾选框更直观，也保证一定看得见
+          InkWell(
+            onTap: () => _setYao(i, dong: !dong),
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              width: 54,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: dong
+                    ? const Color(0xFFC62828).withValues(alpha: 0.12)
+                    : Colors.grey.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: dong ? const Color(0xFFC62828) : Colors.grey.shade400,
+                ),
+              ),
+              child: Text(
+                dong ? (yang ? '○动' : '×动') : '静',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: dong ? FontWeight.bold : FontWeight.normal,
+                  color: dong ? const Color(0xFFC62828) : Colors.grey.shade600,
+                ),
               ),
             ),
-          ),
-          Checkbox(
-            value: dong,
-            visualDensity: VisualDensity.compact,
-            onChanged: (v) => _setYao(i, dong: v ?? false),
           ),
         ],
       ),
