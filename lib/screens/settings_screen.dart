@@ -168,15 +168,6 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
 
         const Divider(height: 16),
-
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.lock_outline, color: Color(0xFF5D4037)),
-          title: const Text('功能解锁', style: TextStyle(fontSize: 15)),
-          subtitle: const Text('输入验证码解锁高级功能', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const UnlockScreen())),
-        ),
       ],
     );
   }
