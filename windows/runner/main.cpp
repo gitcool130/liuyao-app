@@ -27,7 +27,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(L"liuyao_app", origin, size)) {
+  // 窗口标题：用 \u 转义写中文，避免源文件编码在 MSVC 下被按本地代码页解析成乱码
+  if (!window.Create(L"\u516D\u723B\u52A9\u624B", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

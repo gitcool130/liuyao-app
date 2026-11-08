@@ -238,6 +238,19 @@ class GanZhiConverter {
     return '$hourGan$hourZhi';
   }
 
+  /// 由日柱 + 时支推出完整时柱（五鼠遁）
+  ///
+  /// 干支排盘时用户只选时辰地支，时干由日干决定：
+  /// 甲己日起甲子、乙庚日起丙子、丙辛日起戊子、丁壬日起庚子、戊癸日起壬子。
+  static String hourGzFromZhi(String dayGz, String hourZhi) {
+    if (dayGz.length < 1) return hourZhi;
+    int dayGanIdx = tianGan.indexOf(dayGz[0]);
+    int zhiIdx = diZhi.indexOf(hourZhi);
+    if (dayGanIdx < 0 || zhiIdx < 0) return hourZhi;
+    int hourGanIdx = ((dayGanIdx % 5) * 2 + zhiIdx) % 10;
+    return '${tianGan[hourGanIdx]}$hourZhi';
+  }
+
   /// 获取当前时辰
   static String getCurrentShiChen(DateTime dateTime) {
     int hour = dateTime.hour;

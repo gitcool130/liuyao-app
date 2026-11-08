@@ -9,11 +9,13 @@ import 'models/app_settings.dart';
 import 'algorithms/shouxing_calendar.dart';
 import 'screens/home_screen.dart';
 import 'screens/manual_input_screen.dart';
+import 'screens/ganzhi_paipan_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/shake_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/import_screen.dart';
 import 'utils/auto_save.dart';
+import 'database/db_platform.dart';
 
 /// 全局导航键，用于从任意位置导航（如分享intent处理）
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -22,6 +24,8 @@ bool _sharingLock = false;
 void main() async {
   // 确保Flutter绑定初始化（用于加载assets）
   WidgetsFlutterBinding.ensureInitialized();
+  // 桌面端数据库改走 sqflite_common_ffi（sqflite 本身只支持 Android/iOS）
+  initDatabaseFactory();
   // 初始化节气表
   await ShouXingCalendar.init();
   // 预加载设置（确保进入设置页时已有值）
@@ -232,6 +236,7 @@ class LiuYaoApp extends StatelessWidget {
         routes: {
           '/': (context) => const HomeScreen(),
           '/manual': (context) => const ManualInputScreen(),
+          '/ganzhi': (context) => const GanZhiPaiPanScreen(),
           '/shake': (context) => const ShakeScreen(),
           '/result': (context) => const ResultScreen(),
           '/history': (context) => const HistoryScreen(),

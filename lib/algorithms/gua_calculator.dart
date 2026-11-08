@@ -30,6 +30,87 @@ class GuaCalculator {
     // 1. 干支转换
     GanZhiResult ganZhi = GanZhiConverter.convert(divTime);
 
+    return _assemble(
+      backCounts: backCounts,
+      divTime: divTime,
+      question: question,
+      startMethod: startMethod,
+      querentName: querentName,
+      querentGender: querentGender,
+      yearGz: ganZhi.yearGz,
+      monthGz: ganZhi.monthGz,
+      dayGz: ganZhi.dayGz,
+      hourGz: ganZhi.hourGz,
+    );
+  }
+
+  /// 入口方法二：直接指定干支（月建 + 日辰 + 年 + 时辰），不经公历换算
+  ///
+  /// 用于「干支排盘」：按古法卦例，只知“戌月 丁亥日”这类干支信息时，
+  /// 无法反推公历，只能直接给定干支来装卦。
+  ///
+  /// - [monthGz] 只需月支（如 '戌'），也可传完整月柱（'甲戌'）
+  /// - [dayGz] 必须是完整日柱（如 '丁亥'），六神与旬空都由它决定
+  /// - [hourGz] 可留空（表示不记时辰）；也可传时支（'子'），
+  ///   由五鼠遁按日干补全时干
+  static DivinationRecord calculateFromGanZhi({
+    required List<int> backCounts,   // 6个背面数 [0-3]
+    required String dayGz,           // 日柱，如 '丁亥'
+    String monthGz = '',             // 月建，如 '戌' 或 '甲戌'
+    String yearGz = '',              // 年柱，如 '癸丑'
+    String hourGz = '',              // 时辰，如 '子' 或 '庚子'，空=不记
+    String question = '',            // 所问问题
+    String startMethod = 'ganzhi',   // 起卦方式
+    String querentName = '',         // 起卦人姓名
+    String querentGender = '',       // 起卦人性别
+    DateTime? divTime,               // 仅用于记录的显示时间，默认当前
+  }) {
+    if (dayGz.length != 2) {
+      throw ArgumentError('日柱必须是两个字，如「丁亥」');
+    }
+
+    // 月建：只给地支时原样使用；给了月干则取地支
+    String monthZhi = monthGz.isEmpty
+        ? ''
+        : (monthGz.length >= 2 ? monthGz[1] : monthGz);
+
+    // 时柱：只给时支时，用五鼠遁按日干补全
+    String hourFull = '';
+    if (hourGz.isNotEmpty) {
+      hourFull = hourGz.length >= 2
+          ? hourGz
+          : GanZhiConverter.hourGzFromZhi(dayGz, hourGz);
+    }
+
+    return _assemble(
+      backCounts: backCounts,
+      divTime: divTime ?? DateTime.now(),
+      question: question,
+      startMethod: startMethod,
+      querentName: querentName,
+      querentGender: querentGender,
+      yearGz: yearGz,
+      monthGz: monthGz.isEmpty ? '' : (monthGz.length >= 2 ? monthGz : monthGz),
+      dayGz: dayGz,
+      hourGz: hourFull,
+      monthZhiOverride: monthZhi,
+    );
+  }
+
+  /// 装配完整盘面（所有入口共用）
+  static DivinationRecord _assemble({
+    required List<int> backCounts,
+    required DateTime divTime,
+    required String question,
+    required String startMethod,
+    required String querentName,
+    required String querentGender,
+    required String yearGz,
+    required String monthGz,
+    required String dayGz,
+    required String hourGz,
+    String? monthZhiOverride,
+  }) {
     // 2. 创建六爻基础数据
     List<YaoLine> yaoLines = _createYaoLines(backCounts);
 
@@ -55,12 +136,14 @@ class GuaCalculator {
       LiuQinConfig.assignBianYaoLiuQin(yaoLines, gongWuXing);
     }
 
-    // 8. 六神配置
-    LiuShenConfig.assignLiuShen(yaoLines, ganZhi.dayGan);
+    // 8. 六神配置（按日干起）
+    String dayGan = dayGz[0];
+    String dayZhi = dayGz[1];
+    LiuShenConfig.assignLiuShen(yaoLines, dayGan);
 
     // 9. 旬空判断
-    XunKongCalculator.assignXunKong(yaoLines, ganZhi.dayGz);
-    String xunKong = XunKongCalculator.getXunKongStr(ganZhi.dayGz);
+    XunKongCalculator.assignXunKong(yaoLines, dayGz);
+    String xunKong = XunKongCalculator.getXunKongStr(dayGz);
 
     // 10. 世应定位
     int gongNum = benGua.gongNum ?? 0;
@@ -70,11 +153,14 @@ class GuaCalculator {
     FuShenFinder.findFuShen(yaoLines, gongNum, gongWuXing);
 
     // 12. 神煞计算
+    String monthZhi = monthZhiOverride ??
+        (monthGz.length >= 2 ? monthGz[1] : monthGz);
+    String yearZhi = yearGz.length >= 2 ? yearGz[1] : yearGz;
     ShenshaResult shensha = ShenShaCalculator.calculate(
-      dayGan: ganZhi.dayGan,
-      dayZhi: ganZhi.dayZhi,
-      yearZhi: ganZhi.yearZhi,
-      monthZhi: ganZhi.monthZhi,
+      dayGan: dayGan,
+      dayZhi: dayZhi,
+      yearZhi: yearZhi,
+      monthZhi: monthZhi,
     );
 
     // 13. 组装完整记录
@@ -85,10 +171,10 @@ class GuaCalculator {
       startMethod: startMethod,
       querentName: querentName,
       querentGender: querentGender,
-      yearGz: ganZhi.yearGz,
-      monthGz: ganZhi.monthGz,
-      dayGz: ganZhi.dayGz,
-      hourGz: ganZhi.hourGz,
+      yearGz: yearGz,
+      monthGz: monthGz,
+      dayGz: dayGz,
+      hourGz: hourGz,
       xunKong: xunKong,
       benGua: benGua,
       bianGua: bianGua,

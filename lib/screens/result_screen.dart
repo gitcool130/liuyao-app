@@ -948,7 +948,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
   /// 构建彩色干支四柱显示
   Widget _buildColoredGanZhi(DivinationRecord record, double infoFontSize) {
-    final ganZhiStr = '${record.yearGz}年 ${record.monthGz}月 ${record.dayGz}日 ${record.hourGz}时';
+    final ganZhiStr = record.formattedGanZhi;
     final spans = <TextSpan>[];
 
     for (int i = 0; i < ganZhiStr.length; i++) {
@@ -982,12 +982,14 @@ class _ResultScreenState extends State<ResultScreen> {
 
     String jieQiStr = '';
     try {
-      final jieQiList = ShouXingCalendar.getJieQiList(record.divTime.year);
-      for (final jieQi in jieQiList) {
-        final diff = record.divTime.difference(jieQi.time).abs();
-        if (diff.inHours < 2) {
-          jieQiStr = '${jieQi.name} ${jieQi.time.hour.toString().padLeft(2, '0')}:${jieQi.time.minute.toString().padLeft(2, '0')}';
-          break;
+      if (record.startMethod != 'ganzhi') {
+        final jieQiList = ShouXingCalendar.getJieQiList(record.divTime.year);
+        for (final jieQi in jieQiList) {
+          final diff = record.divTime.difference(jieQi.time).abs();
+          if (diff.inHours < 2) {
+            jieQiStr = '${jieQi.name} ${jieQi.time.hour.toString().padLeft(2, '0')}:${jieQi.time.minute.toString().padLeft(2, '0')}';
+            break;
+          }
         }
       }
     } catch (_) {}
@@ -1002,11 +1004,19 @@ class _ResultScreenState extends State<ResultScreen> {
             Row(
               children: [
                 Flexible(
-                  child: Text(record.formattedDivTime, style: TextStyle(fontSize: infoFontSize), overflow: TextOverflow.ellipsis),
+                  child: Text(
+                      record.startMethod == 'ganzhi'
+                          ? '干支排盘'
+                          : record.formattedDivTime,
+                      style: TextStyle(fontSize: infoFontSize),
+                      overflow: TextOverflow.ellipsis),
                 ),
                 const SizedBox(width: 4),
                 Flexible(
-                  child: Text('${record.yearGz}年 $lunarDateStr $hourGz时',
+                  child: Text(
+                      record.startMethod == 'ganzhi'
+                          ? record.formattedGanZhi
+                          : '${record.yearGz}年 $lunarDateStr $hourGz时',
                       style: TextStyle(fontSize: infoFontSize, color: Colors.grey.shade700),
                       textAlign: TextAlign.right, overflow: TextOverflow.ellipsis),
                 ),
@@ -1067,13 +1077,19 @@ class _ResultScreenState extends State<ResultScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Row(
           children: [
-            _pillar('$yearGz年', nianKong, colored),
-            const SizedBox(width: 4),
-            _pillar('$monthGz月', yueKong, colored),
-            const SizedBox(width: 4),
+            if (yearGz.isNotEmpty) ...[
+              _pillar('$yearGz年', nianKong, colored),
+              const SizedBox(width: 4),
+            ],
+            if (monthGz.isNotEmpty) ...[
+              _pillar('$monthGz月', yueKong, colored),
+              const SizedBox(width: 4),
+            ],
             _pillar('$dayGz日', riKong, colored),
-            const SizedBox(width: 4),
-            _pillar('$hourGz时', shiKong, colored),
+            if (hourGz.isNotEmpty) ...[
+              const SizedBox(width: 4),
+              _pillar('$hourGz时', shiKong, colored),
+            ],
           ],
         ),
       ),

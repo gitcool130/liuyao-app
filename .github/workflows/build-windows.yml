@@ -1,0 +1,108 @@
+name: Build Windows Portable
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-windows:
+    name: Windows 绿色版
+    runs-on: windows-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+
+      - name: 版本信息
+        run: flutter --version
+
+      - name: 拉取依赖
+        run: flutter pub get
+
+      - name: 编译 Windows Release
+        run: flutter build windows --release
+
+      - name: 打包为绿色版
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          # 产物目录（新老版本路径不同，都试一下）
+          $candidates = @(
+            "build/windows/x64/runner/Release",
+            "build/windows/runner/Release"
+          )
+          $out = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $out) { throw "找不到编译产物目录" }
+          Write-Host "产物目录: $out"
+          Get-ChildItem $out | Select-Object Name, Length | Format-Table
+
+          # 组装绿色版目录
+          $stageRoot = "stage"
+          $folder = "六爻助手-Windows绿色版"
+          $stage = Join-Path $stageRoot $folder
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item "$out/*" $stage -Recurse -Force
+
+          # 主程序改名，方便识别
+          if (Test-Path (Join-Path $stage "liuyao_app.exe")) {
+            Rename-Item (Join-Path $stage "liuyao_app.exe") "六爻助手.exe"
+          }
+
+          # 附一份说明
+          $readme = @"
+          六爻助手  Windows 绿色版
+          ============================
+
+          这是免安装版：整个文件夹拷到哪里都能用，不需要安装。
+
+          使用
+          ----
+          1. 双击「六爻助手.exe」运行。
+          2. 首次运行若提示「未知发布者」，点「更多信息 → 仍要运行」。
+          3. 不要单独移动 exe —— data 文件夹要和它放在一起。
+
+          起卦方式
+          --------
+          · 手动排盘   输入六次摇卦的背面数
+          · 干支排盘   直接指定年/月建/日辰/时辰，再逐爻点阴阳与动，
+                       用于录入古籍卦例或复盘他人卦例（不依赖公历时间）
+          · 在线起卦   （仅手机版）
+
+          桌面版说明
+          ----------
+          · 摇一摇、拍照 OCR、内置论坛浏览器依赖手机传感器/相机/WebView，
+            桌面版没有对应实现，点击会提示「桌面版暂不支持」。
+          · 数据保存在 %USERPROFILE%\Documents\liuyao_records.db，
+            备份或换机时复制这个文件即可。
+
+          构建信息
+          --------
+          本包由 GitHub Actions 自动编译，Flutter ${{ env.FLUTTER_VERSION || 'stable' }}，
+          提交 ${{ github.sha }}。
+          "@
+          $readme = $readme -replace '(?m)^\s{10}', ''
+          Set-Content -Path (Join-Path $stage "使用说明.txt") -Value $readme -Encoding UTF8
+
+          # 压缩
+          $zip = "liuyao-app-windows-portable.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          7z a -tzip -mx=7 $zip ".\$stageRoot\$folder" | Out-Null
+          if (-not (Test-Path $zip)) { throw "打包失败" }
+          Write-Host ("压缩包大小: {0:N1} MB" -f ((Get-Item $zip).Length / 1MB))
+          Get-ChildItem $zip
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: liuyao-app-windows-portable
+          path: liuyao-app-windows-portable.zip
+          retention-days: 30

@@ -149,8 +149,14 @@ class DivinationRecord {
   }
 
   /// 格式化干支显示
+  /// 干支排盘时可能只有月建和日辰，空柱不显示，避免出现「年」「时」这种空标签
   String get formattedGanZhi {
-    return '$yearGz年 $monthGz月 $dayGz日 $hourGz时';
+    final parts = <String>[];
+    if (yearGz.isNotEmpty) parts.add('$yearGz年');
+    if (monthGz.isNotEmpty) parts.add('$monthGz月');
+    if (dayGz.isNotEmpty) parts.add('$dayGz日');
+    if (hourGz.isNotEmpty) parts.add('$hourGz时');
+    return parts.join(' ');
   }
 
   /// 复制并更新部分属性

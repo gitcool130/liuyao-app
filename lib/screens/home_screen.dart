@@ -10,9 +10,11 @@ import '../screens/unlock_screen.dart';
 import '../screens/course_notes_screen.dart';
 import '../screens/shensha_detail_screen.dart';
 import '../screens/browser_screen.dart';
+import '../screens/ganzhi_paipan_screen.dart';
 import '../screens/image_import_screen.dart';
 import '../services/feature_lock_service.dart';
 import '../services/update_manager.dart';
+import '../utils/platform_support.dart';
 import '../version.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -81,6 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 检查是否有待安装的安装包（上次退出时未安装）
   void _checkPendingInstall() async {
+    // 更新包是 Android apk，桌面端不适用
+    if (isDesktop) return;
     final hasPending = await UpdateManager.hasPendingInstall();
     if (!mounted || !hasPending) return;
 
@@ -118,6 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 检查更新
   void _checkUpdate() async {
+    // 桌面端不做 apk 更新检查
+    if (isDesktop) return;
     // 延迟1秒让UI先加载完成，同时让用户感知到确实在联网检查
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
@@ -258,6 +264,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToShake() {
+    if (isDesktop) {
+      _unsupported('在线起卦（摇一摇）');
+      return;
+    }
     final provider = Provider.of<DivinationProvider>(context, listen: false);
     provider.setDivinationTime(_divTime);
     provider.setQuestion(_question);
@@ -265,6 +275,20 @@ class _HomeScreenState extends State<HomeScreen> {
     provider.setQuerentGender(_querentGender);
     provider.setStartMethod('shake');
     Navigator.pushNamed(context, '/shake');
+  }
+
+  /// 桌面端不支持的功能统一提示
+  void _unsupported(String feature) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(feature),
+        content: Text(desktopUnsupportedHint(feature)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('知道了')),
+        ],
+      ),
+    );
   }
 
   void _navigateToHistory() {
@@ -508,9 +532,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 12),
 
+            // 干支排盘按钮：直接按「月建 + 日辰」起局，不依赖公历
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const GanZhiPaiPanScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.event_note),
+              label: Text('干支排盘', style: TextStyle(fontSize: 16)),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                backgroundColor: const Color(0xFF5D4037),
+                foregroundColor: Colors.white,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
             // 拍照导入按钮（略带反差的配色）
             ElevatedButton.icon(
               onPressed: () {
+                if (isDesktop) {
+                  _unsupported('拍照导入排盘');
+                  return;
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -622,7 +671,13 @@ class _HomeScreenState extends State<HomeScreen> {
           unlocked: _unlockedFeatures.contains('F007'),
           color: Colors.blue,
           onTap: _unlockedFeatures.contains('F007')
-              ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BrowserScreen()))
+              ? () {
+                  if (isDesktop) {
+                    _unsupported('易青岚论坛（内置浏览器）');
+                    return;
+                  }
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const BrowserScreen()));
+                }
               : null,
         ),
 
